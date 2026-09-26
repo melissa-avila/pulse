@@ -13,6 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&display=swap" rel="stylesheet" />
 <script src="./qr.js"></script>
 <script src="./supabase-config.js"></script>
+<title>Pulse</title>
 <style>
   * { box-sizing: border-box; }
   body { margin: 0; font-family: "Sofia Pro", "SofiaPro", Inter, system-ui, sans-serif; background: #E9E7E1; color: #14141A; -webkit-font-smoothing: antialiased; }
@@ -94,7 +95,6 @@
               <div style="display: flex; flex-direction: column; gap: 10px; min-width: 240px; flex: 1 1 240px;">
                 <div style="font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #6B6A64;">Join code</div>
                 <div style="font-size: 28px; font-weight: 700; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; white-space: nowrap;">{{ selCode }}</div>
-                <div style="font-size: 12px; color: #6B6A64; word-break: break-all;">{{ joinUrl }}</div>
                 <button onClick="{{ rotateCode }}" style="margin-top: 4px; align-self: flex-start; white-space: nowrap; background: #EDEBE6; border: 1px solid #DAD7CF; border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;" style-hover="background: #14141A; color: #F6F5F2;">Rotate code</button>
                 <div style="font-size: 11px; color: #9A988F; line-height: 1.4;">Rotating invalidates the old code and QR immediately. Answers already collected are kept.</div>
               </div>
@@ -172,8 +172,7 @@
         <button onClick="{{ endPresentation }}" title="End session" style="width: 40px; height: 40px; border-radius: 999px; border: 0; background: #F0EFEB; cursor: pointer; font-size: 15px; color: #6B6A64;" style-hover="background: #E4E2DC;">✕</button>
         <div style="flex: 1;"></div>
         <div style="background: #F0EFEB; border-radius: 999px; padding: 12px 22px; display: flex; align-items: center; gap: 12px; font-size: 19px; min-width: 0; max-width: 100%;">
-          <span style="color: #3C3B35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">Join at {{ joinHost }} | use code</span>
-          <span style="background: #fff; border-radius: 8px; padding: 3px 12px; font-weight: 600; letter-spacing: .02em; font-variant-numeric: tabular-nums; white-space: nowrap; flex: none;">{{ selCode }}</span>
+          <span style="color: #3C3B35; white-space: nowrap;">Scan the QR code to join</span>
         </div>
         <div style="flex: 1;"></div>
         <div style="font-size: 15px; font-weight: 600; color: #9A988F;">{{ selName }}</div>
@@ -258,10 +257,23 @@
             </div>
           </sc-if>
 
+          <sc-if value="{{ needsCode }}" hint-placeholder-val="{{ false }}">
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 18px; padding: 32px 26px;">
+              <div style="font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #9A988F;">Pulse</div>
+              <div style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2;">Enter the code on screen</div>
+              <input value="{{ codeDraft }}" onChange="{{ setCodeDraft }}" onKeyDown="{{ codeKeyDown }}" inputMode="numeric" autoComplete="off" placeholder="1234 5678" style="border: 1px solid #DAD7CF; border-radius: 12px; padding: 14px 16px; font-size: 22px; letter-spacing: .08em; font-variant-numeric: tabular-nums; background: #fff;" />
+              <sc-if value="{{ hasCodeError }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size: 14px; color: #C0392B;">{{ codeError }}</div>
+              </sc-if>
+              <button onClick="{{ submitCode }}" style="{{ codeBtnStyle }}">Continue</button>
+            </div>
+          </sc-if>
+
           <sc-if value="{{ codeInvalid }}" hint-placeholder-val="{{ false }}">
             <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 32px; text-align: center;">
               <div style="font-size: 22px; font-weight: 600; letter-spacing: -0.01em;">This code has expired</div>
               <div style="font-size: 15px; color: #6B6A64; line-height: 1.5;">The presenter rotated the QR code. Scan the new one on the screen to rejoin.</div>
+              <button onClick="{{ enterCodeInstead }}" style="align-self: center; margin-top: 6px; background: transparent; border: 1px solid #DAD7CF; border-radius: 999px; padding: 12px 20px; font-size: 15px; font-weight: 600; cursor: pointer;" style-hover="border-color: #14141A;">Enter a code instead</button>
             </div>
           </sc-if>
 
@@ -389,6 +401,14 @@ class Component extends DCLogic {
     mine: loadMine()
   };
 
+  tryCode() {
+    const c = String(this.state.codeDraft || "").replace(/\s/g, "");
+    if (!c) return;
+    const hit = this.state.sessions.find((s) => s.code === c);
+    if (!hit) { this.setState({ codeError: "No active session uses that code. Check the screen and try again." }); return; }
+    this.setState({ scanCode: c, codeDraft: "", codeError: "", phoneSessionId: null, phoneName: "" });
+  }
+
   ask(title, body, label, onYes) { this.setState({ confirm: { title, body, label, onYes }, menuOpen: false }); }
 
   saveMine(mine) {
@@ -451,11 +471,11 @@ class Component extends DCLogic {
   }
 
   componentDidMount() {
-    const m = /[#?&]join=(\d+)/.exec(window.location.hash + window.location.search);
-    const scanned = m ? m[1] : null;
+    const m = /[#?&]join(?:=(\d*))?/.exec(window.location.hash + window.location.search);
+    const scanned = m ? (m[1] || "") : null; // "" = arrived via short link, needs code
 
     if (sbConfig()) {
-      this.setState({ scanCode: scanned || "", view: scanned ? "phone" : "admin", remote: true, kiosk: !!scanned });
+      this.setState({ scanCode: scanned || "", view: scanned !== null ? "phone" : "admin", remote: true, kiosk: scanned !== null });
       this.loadRemote().then(async (sessions) => {
         if (!sessions.length) {
           const s = seed()[0];
@@ -470,7 +490,7 @@ class Component extends DCLogic {
           sessions,
           loaded: true,
           selectedId: sessions[0] ? sessions[0].id : null,
-          scanCode: scanned || (sessions[0] ? sessions[0].code : "")
+          scanCode: scanned !== null ? scanned : (sessions[0] ? sessions[0].code : "")
         });
       }).catch((e) => this.setState({ backendError: String(e.message || e), loaded: true }));
       this._poll = setInterval(() => this.refresh(), 2000);
@@ -485,9 +505,9 @@ class Component extends DCLogic {
     this.setState({
       sessions,
       selectedId: first.id,
-      scanCode: scanned || first.code,
-      view: scanned ? "phone" : "admin",
-      kiosk: !!scanned,
+      scanCode: scanned !== null ? scanned : first.code,
+      view: scanned !== null ? "phone" : "admin",
+      kiosk: scanned !== null,
       loaded: true
     });
     this._onStorage = (e) => {
@@ -546,15 +566,12 @@ class Component extends DCLogic {
   }
 
   joinHost() {
+    const cfg = window.PULSE || {};
+    if (cfg.shortUrl) return String(cfg.shortUrl).replace(/^https?:\/\//, "").replace(/\/$/, "");
     const loc = window.location;
     if (loc.protocol !== "http:" && loc.protocol !== "https:") return HOST;
-    let h = loc.host.replace(/^www\./, "");
-    if (h.length > 26) {
-      const parts = h.split(".");
-      h = parts.slice(-2).join(".");
-      if (h.length > 26) h = h.slice(0, 25) + "…";
-    }
-    return h;
+    const path = loc.pathname.replace(/\/[^/]*\.html?$/i, "").replace(/\/$/, "");
+    return loc.host.replace(/^www\./, "") + path;
   }
 
   drawQr() {
@@ -850,7 +867,17 @@ class Component extends DCLogic {
       endedThanks: (st.phoneName
         ? "Thanks for joining, " + st.phoneName + " — the session has ended."
         : "Thanks for joining — the session has ended.") + " You can close this tab.",
-      codeInvalid: !!st.loaded && !phoneSess,
+      codeInvalid: !!st.loaded && !phoneSess && String(st.scanCode || "").trim() !== "",
+      needsCode: !!st.loaded && !phoneSess && String(st.scanCode || "").trim() === "",
+      codeDraft: st.codeDraft || "",
+      setCodeDraft: (e) => this.setState({ codeDraft: e.target.value.replace(/[^\d ]/g, "").slice(0, 9), codeError: "" }),
+      hasCodeError: !!st.codeError,
+      codeError: st.codeError || "",
+      codeBtnStyle: "border: 0; border-radius: 999px; padding: 15px 20px; font-size: 16px; font-weight: 600; background: " +
+        ((st.codeDraft || "").replace(/\s/g, "").length ? accent : "#DAD7CF") + "; color: " + ((st.codeDraft || "").replace(/\s/g, "").length ? "#fff" : "#9A988F") + "; cursor: pointer;",
+      submitCode: () => this.tryCode(),
+      codeKeyDown: (e) => { if (e.key === "Enter") { e.preventDefault(); this.tryCode(); } },
+      enterCodeInstead: () => this.setState({ scanCode: "", codeDraft: "", codeError: "" }),
       answerRemaining: st.answerDraft.length >= MAX_ANSWER
         ? "250 character limit reached"
         : (MAX_ANSWER - st.answerDraft.length) + " of " + MAX_ANSWER + " characters left",
