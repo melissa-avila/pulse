@@ -168,8 +168,23 @@
     });
   }
 
+  function celebrate() {
+    ac();
+    var t = ctx.currentTime + 0.05, g = ctx.createGain();
+    g.gain.value = 0.9; g.connect(out);
+    [72, 76, 79, 84].forEach(function (n, i) {
+      tone(t + i * 0.11, g, mtof(n), 0.12, { type: "triangle", gain: 0.13, attack: 0.01, release: 0.35 });
+    });
+    [72, 76, 79, 84, 88].forEach(function (n) {
+      tone(t + 0.48, g, mtof(n), 0.5, { type: "triangle", gain: 0.06, attack: 0.02, release: 1.4 });
+    });
+    for (var i = 0; i < 9; i++) {
+      tone(t + 0.55 + i * 0.07 + Math.random() * 0.04, g, mtof(pick([91, 93, 96, 98, 100])), 0.02, { gain: 0.035, attack: 0.004, release: 0.4 });
+    }
+  }
+
   window.PulseAudio = {
-    tracks: TRACKS, play: play, stop: stop, setVolume: setVolume, beep: beep,
+    tracks: TRACKS, play: play, stop: stop, setVolume: setVolume, beep: beep, celebrate: celebrate,
     isPlaying: function () { return !!cur; }
   };
 })();

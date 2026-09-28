@@ -54,3 +54,9 @@ alter table responses add column if not exists deleted_by text;
 
 -- v3: per-session presenter settings (safe to re-run)
 alter table sessions add column if not exists settings jsonb not null default '{}'::jsonb;
+
+-- v4: starred answers (safe to re-run)
+alter table responses add column if not exists starred boolean not null default false;
+
+-- v5: answer notes (markdown). Question notes live inside sessions.questions. Safe to re-run.
+alter table responses add column if not exists note text;
