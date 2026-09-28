@@ -22,7 +22,7 @@
   input, textarea, button { font: inherit; color: inherit; }
   textarea { resize: none; }
   @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
-  @keyframes fresh { 0%, 12% { background-color: #D6E0F0; } 100% { background-color: #F0EFEB; } }
+  @keyframes fresh { 0%, 12% { background-color: #D6E0F0; box-shadow: 0 0 0 2px #B9C8E2; } }
 </style>
 </helmet>
 <div style="min-height: 100vh; display: flex; flex-direction: column;">
@@ -116,12 +116,16 @@
             </div>
             <div style="display: flex; flex-direction: column; gap: 8px;">
               <sc-for list="{{ questionRows }}" as="q" hint-placeholder-count="2">
-                <div style="display: flex; gap: 10px; align-items: center; background: #fff; border: 1px solid #DAD7CF; border-radius: 12px; padding: 10px 12px;">
+                <div draggable="true" onDragStart="{{ q.dragStart }}" onDragOver="{{ q.dragOver }}" onDrop="{{ q.drop }}" onDragEnd="{{ q.dragEnd }}" style="{{ q.rowStyle }}">
+                  <div title="Drag to reorder" style="flex: none; width: 16px; cursor: grab; color: #B4B2AA; font-size: 14px; letter-spacing: -2px; text-align: center; user-select: none;">⋮⋮</div>
                   <div style="width: 26px; height: 26px; border-radius: 999px; background: #EDEBE6; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #6B6A64; flex: none;">{{ q.num }}</div>
                   <input value="{{ q.text }}" onChange="{{ q.edit }}" placeholder="Type your question…" style="flex: 1; min-width: 0; border: 0; background: transparent; font-size: 15px; padding: 4px 0;" />
                   <div style="font-size: 12px; color: #6B6A64; font-variant-numeric: tabular-nums; flex: none;">{{ q.count }}</div>
                   <button onClick="{{ q.presentFrom }}" title="Present from this question" style="background: transparent; border: 1px solid #DAD7CF; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; color: #3C3B35; white-space: nowrap; flex: none;" style-hover="border-color: #14141A; background: #EDEBE6;">Present from here</button>
-                  <button onClick="{{ q.up }}" title="Move up" style="background: transparent; border: 0; color: #9A988F; cursor: pointer; font-size: 14px; padding: 4px;" style-hover="color: #14141A;">↑</button>
+                  <div style="display: flex; flex-direction: column; flex: none;">
+                    <button onClick="{{ q.up }}" disabled="{{ q.isFirst }}" title="Move up" style="{{ q.upStyle }}" style-hover="background: #EDEBE6;">▲</button>
+                    <button onClick="{{ q.down }}" disabled="{{ q.isLast }}" title="Move down" style="{{ q.downStyle }}" style-hover="background: #EDEBE6;">▼</button>
+                  </div>
                   <button onClick="{{ q.remove }}" title="Delete" style="background: transparent; border: 0; color: #9A988F; cursor: pointer; font-size: 14px; padding: 4px;" style-hover="color: #C0392B;">✕</button>
                 </div>
               </sc-for>
@@ -142,9 +146,14 @@
                   <div style="display: grid; grid-template-columns: minmax(80px, 110px) minmax(130px, 0.9fr) minmax(150px, 1.2fr) minmax(76px, auto) 28px; gap: 12px; padding: 11px 14px; border-top: 1px solid #EDEBE6; font-size: 14px; align-items: start;">
                     <div style="font-weight: 600;">{{ r.name }}</div>
                     <div style="color: #6B6A64; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere;"><span style="font-weight: 600; color: #14141A;">{{ r.qNum }}</span> {{ r.qText }}</div>
-                    <div style="color: #3C3B35; line-height: 1.4; overflow-wrap: anywhere;">{{ r.text }}</div>
+                    <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                      <div style="{{ r.textStyle }}">{{ r.text }}</div>
+                      <sc-if value="{{ r.deleted }}" hint-placeholder-val="{{ false }}">
+                        <div style="font-size: 12px; color: #9A988F;">{{ r.deletedNote }}</div>
+                      </sc-if>
+                    </div>
                     <div style="color: #9A988F; font-size: 12px; font-variant-numeric: tabular-nums;">{{ r.when }}</div>
-                    <button onClick="{{ r.remove }}" title="Delete answer" style="width: 28px; height: 28px; border-radius: 999px; border: 0; background: transparent; color: #9A988F; cursor: pointer; font-size: 13px; margin-top: -4px;" style-hover="background: #FBEDEB; color: #C0392B;">✕</button>
+                    <button onClick="{{ r.remove }}" disabled="{{ r.deleted }}" title="Delete answer" style="width: 28px; height: 28px; border-radius: 999px; border: 0; background: transparent; color: #9A988F; cursor: pointer; font-size: 13px; margin-top: -4px;" style-hover="background: #FBEDEB; color: #C0392B;">✕</button>
                   </div>
                 </sc-for>
               </div></div>
@@ -182,14 +191,47 @@
 
         <div style="display: flex; flex-direction: column; gap: 36px; min-width: 0;">
           <div style="font-family: 'Sofia Pro', 'SofiaPro', Inter, system-ui, sans-serif; font-size: 52px; font-weight: 600; line-height: 1.12; letter-spacing: -0.025em; text-wrap: pretty;">{{ activeQuestionText }}</div>
-          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); grid-auto-rows: min-content; align-items: start; align-content: start; gap: 14px;">
-            <sc-for list="{{ liveAnswers }}" as="a" hint-placeholder-count="2">
-              <div style="position: relative; background: #F0EFEB; border-radius: 16px; padding: 14px 40px 14px 18px; align-self: start; height: fit-content; display: flex; flex-direction: column; gap: 5px; animation: {{ a.anim }};">
-                <div style="font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: #8C8A82; font-weight: 600;">{{ a.name }}</div>
-                <div style="font-size: 19px; line-height: 1.35; color: #14141A; text-wrap: pretty; overflow-wrap: anywhere;">{{ a.text }}</div>
-                <button onClick="{{ a.remove }}" title="Delete answer" style="position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 999px; border: 0; background: transparent; color: #A8A69E; cursor: pointer; font-size: 12px; line-height: 1;" style-hover="background: #FBEDEB; color: #C0392B;">✕</button>
-              </div>
-            </sc-for>
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; min-height: 28px;">
+              <button onClick="{{ toggleGrouping }}" style="display: flex; align-items: center; gap: 8px; background: transparent; border: 0; padding: 2px 0; cursor: pointer; font-size: 13px; font-weight: 600; color: #6B6A64;">
+                <span style="{{ groupingTrackStyle }}"><span style="{{ groupingKnobStyle }}"></span></span>
+                Sentiment grouping
+              </button>
+              <sc-for list="{{ themeLegend }}" as="t" hint-placeholder-count="0">
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #6B6A64;">
+                  <span style="{{ t.dotStyle }}"></span>
+                  <span>{{ t.label }}</span>
+                  <span style="color: #B4B2AA; font-variant-numeric: tabular-nums;">{{ t.count }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div ref="{{ gridRef }}" style="display: flex; gap: 14px; align-items: flex-start;">
+              <sc-for list="{{ answerColumns }}" as="col" hint-placeholder-count="3">
+                <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 14px;">
+                  <sc-for list="{{ col.items }}" as="a" hint-placeholder-count="1">
+                    <div style="{{ a.cardStyle }}">
+                      <div style="display: flex; align-items: center; gap: 6px; margin: -2px -8px 0 0;">
+                        <div style="flex: 1; min-width: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: #8C8A82; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ a.name }}</div>
+                        <sc-if value="{{ a.showDot }}" hint-placeholder-val="{{ false }}">
+                          <button onClick="{{ a.openPicker }}" title="Change theme" style="width: 22px; height: 22px; border-radius: 999px; border: 0; background: transparent; cursor: pointer; display: grid; place-items: center; padding: 0;" style-hover="background: rgba(20,20,26,.06);">
+                            <span style="{{ a.dotStyle }}"></span>
+                          </button>
+                        </sc-if>
+                        <button onClick="{{ a.remove }}" title="Delete answer" style="width: 22px; height: 22px; border-radius: 999px; border: 0; background: transparent; color: #A8A69E; cursor: pointer; font-size: 11px; line-height: 1; padding: 0;" style-hover="background: #FBEDEB; color: #C0392B;">✕</button>
+                      </div>
+                      <div style="font-size: 19px; line-height: 1.35; color: #14141A; text-wrap: pretty; overflow-wrap: anywhere;">{{ a.text }}</div>
+                      <sc-if value="{{ a.pickerOpen }}" hint-placeholder-val="{{ false }}">
+                        <div style="position: absolute; top: 34px; right: 26px; z-index: 5; display: flex; gap: 6px; padding: 7px 8px; background: #fff; border-radius: 999px; box-shadow: 0 6px 18px rgba(20,20,26,.14);">
+                          <sc-for list="{{ a.swatches }}" as="w" hint-placeholder-count="6">
+                            <button onClick="{{ w.pick }}" title="{{ w.label }}" style="{{ w.style }}"></button>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
           </div>
           <sc-if value="{{ presentEmpty }}" hint-placeholder-val="{{ false }}">
             <div style="font-size: 18px; color: #B4B2AA;">Waiting for the first answer…</div>
@@ -223,12 +265,12 @@
       </div>
 
       <div style="display: flex; align-items: center; gap: 12px; padding-top: 16px;">
-        <button onClick="{{ prevQuestion }}" style="{{ prevStyle }}">←</button>
+        <button onClick="{{ prevQuestion }}" style="{{ prevStyle }}">← Previous question</button>
         <div style="flex: 1;"></div>
         <div style="font-size: 14px; color: #9A988F; font-variant-numeric: tabular-nums;">{{ questionPosition }}</div>
         <div style="flex: 1;"></div>
         <button onClick="{{ nextQuestion }}" style="{{ nextStyle }}">Next question →</button>
-        <button onClick="{{ endPresentation }}" style="background: #F0EFEB; border: 0; border-radius: 999px; padding: 12px 22px; font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap;" style-hover="background: #E4E2DC;">End session</button>
+        <button onClick="{{ endPresentation }}" style="background: #F0EFEB; border: 0; border-radius: 999px; padding: 12px 22px; font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap; color: #C0392B;" style-hover="background: #E4E2DC;">End session</button>
       </div>
     </div>
   </sc-if>
@@ -378,6 +420,62 @@ function seed() {
   }];
 }
 
+function arrowStyle(on) {
+  return "width: 24px; height: 16px; border: 0; border-radius: 4px; background: transparent; font-size: 9px; line-height: 1; padding: 0; color: " +
+    (on ? "#6B6A64" : "#D5D3CC") + "; cursor: " + (on ? "pointer" : "default") + ";";
+}
+const THEMES = [
+  { key: "sky",   name: "Blue",   bg: "#DCE6F4", dot: "#5B7DB8" },
+  { key: "sage",  name: "Green",  bg: "#DDEBDD", dot: "#6E9A6E" },
+  { key: "sand",  name: "Yellow", bg: "#F3E6CC", dot: "#C99A45" },
+  { key: "rose",  name: "Red",    bg: "#F4DDDD", dot: "#C47272" },
+  { key: "lilac", name: "Purple", bg: "#E6DFF2", dot: "#8C76B8" },
+  { key: "teal",  name: "Teal",   bg: "#D5ECEA", dot: "#4F9B94" }
+];
+const STOP = new Set("a an and are as at be been but by can could did do does doing for from had has have having he her here him his how i if in into is it its just me more most my no not now of on once only or other our out over own same she should so some such than that the their them then there these they this those through to too under until up very was we were what when where which while who why will with would you your yours im ive dont cant its it's i'm i've don't can't really also like get got make one thing things lot much many way think know want need use using used".split(" "));
+function tokens(t) {
+  return String(t || "").toLowerCase().replace(/[^a-z0-9\s']/g, " ").split(/\s+/)
+    .filter((w) => w.length > 2 && !STOP.has(w))
+    .map((w) => w.replace(/'s$/, "").replace(/(ing|ed|ly|es|s)$/, "").slice(0, 7))
+    .filter((w) => w.length > 2);
+}
+function autoThemes(responses) {
+  const groups = [];
+  const assign = new Map();
+  responses.forEach((r) => {
+    const tk = new Set(tokens(r.text));
+    let best = -1, bestSim = 0;
+    groups.forEach((g, gi) => {
+      let inter = 0;
+      tk.forEach((w) => { if (g.words.has(w)) inter++; });
+      const sim = tk.size ? inter / Math.min(tk.size, g.words.size || 1) : 0;
+      if (sim > bestSim) { bestSim = sim; best = gi; }
+    });
+    let gi = best;
+    if (bestSim < 0.34 || gi < 0) {
+      if (groups.length < THEMES.length) { groups.push({ words: new Set(), freq: {} }); gi = groups.length - 1; }
+      else if (gi < 0) gi = groups.reduce((m, g, i) => (Object.keys(g.freq).length < Object.keys(groups[m].freq).length ? i : m), 0);
+    }
+    const g = groups[gi];
+    tk.forEach((w) => { g.words.add(w); g.freq[w] = (g.freq[w] || 0) + 1; });
+    assign.set(r.id, THEMES[gi].key);
+  });
+  const labels = {};
+  groups.forEach((g, gi) => {
+    const top = Object.keys(g.freq).sort((a, b) => g.freq[b] - g.freq[a])[0];
+    labels[THEMES[gi].key] = top ? top.charAt(0).toUpperCase() + top.slice(1) : THEMES[gi].name;
+  });
+  return { assign, labels };
+}
+function effectiveThemes(responses) {
+  const live = responses.filter((r) => !r.deletedAt);
+  const auto = autoThemes(live);
+  const out = new Map();
+  live.forEach((r) => out.set(r.id, r.theme || auto.assign.get(r.id)));
+  return { map: out, labels: auto.labels };
+}
+function themeByKey(k) { return THEMES.find((t) => t.key === k) || null; }
+
 function sbConfig() {
   const c = window.SUPABASE;
   return c && c.url && c.anonKey ? c : null;
@@ -401,6 +499,17 @@ class Component extends DCLogic {
     mine: loadMine()
   };
 
+  moveQuestion(sel, from, to) {
+    if (!sel || from === to || to < 0 || to >= sel.questions.length) return;
+    const activeId = (sel.activeIndex || 0) >= 0 && sel.questions[sel.activeIndex || 0] ? sel.questions[sel.activeIndex || 0].id : null;
+    this.update(sel.id, (s) => {
+      const qs = s.questions.slice();
+      qs.splice(to, 0, qs.splice(from, 1)[0]);
+      const ai = (s.activeIndex || 0) < 0 ? s.activeIndex : Math.max(0, qs.findIndex((x) => x.id === activeId));
+      return { ...s, questions: qs, activeIndex: ai };
+    });
+  }
+
   tryCode() {
     const c = String(this.state.codeDraft || "").replace(/\s/g, "");
     if (!c) return;
@@ -416,10 +525,21 @@ class Component extends DCLogic {
     try { localStorage.setItem(MINE_KEY, JSON.stringify(mine.slice(-200))); } catch (e) {}
   }
 
-  deleteResponse(sessId, rid) {
-    if (sbConfig()) this.remoteWrite(this.sb("responses?id=eq." + rid, { method: "DELETE", prefer: "return=minimal" }));
+  deleteResponse(sessId, rid, by) {
+    const now = new Date();
+    if (sbConfig()) this.remoteWrite(this.sb("responses?id=eq." + rid, {
+      method: "PATCH", prefer: "return=minimal",
+      body: { deleted_at: now.toISOString(), deleted_by: by || "presenter" }
+    }));
     this.persist(this.state.sessions.map((s) => (s.id === sessId
-      ? { ...s, responses: s.responses.filter((r) => r.id !== rid) }
+      ? { ...s, responses: s.responses.map((r) => (r.id === rid ? { ...r, deletedAt: now.getTime(), deletedBy: by || "presenter" } : r)) }
+      : s)));
+  }
+
+  setTheme(sessId, rid, key) {
+    if (sbConfig()) this.remoteWrite(this.sb("responses?id=eq." + rid, { method: "PATCH", prefer: "return=minimal", body: { theme: key } }));
+    this.persist(this.state.sessions.map((s) => (s.id === sessId
+      ? { ...s, responses: s.responses.map((r) => (r.id === rid ? { ...r, theme: key } : r)) }
       : s)));
   }
 
@@ -456,7 +576,8 @@ class Component extends DCLogic {
       activeIndex: r.active_index || 0,
       participants: parts.filter((p) => p.session_id === r.id).map((p) => p.name),
       responses: resps.filter((x) => x.session_id === r.id)
-        .map((x) => ({ id: x.id, qid: x.question_id, name: x.name, text: x.body, ts: Date.parse(x.created_at) }))
+        .map((x) => ({ id: x.id, qid: x.question_id, name: x.name, text: x.body, ts: Date.parse(x.created_at),
+          theme: x.theme || null, deletedAt: x.deleted_at ? Date.parse(x.deleted_at) : null, deletedBy: x.deleted_by || null }))
     }));
   }
 
@@ -613,10 +734,21 @@ class Component extends DCLogic {
     const s = this.selected();
     if (!s) return;
     const esc = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
-    const rows = [["Name", "Answer", "Timestamp", "Question"]];
+    const rows = [["Name", "Answer", "Timestamp", "Question", "Theme", "Status", "Deleted by", "Deleted at"]];
+    const byQ = {};
+    s.questions.forEach((q) => { byQ[q.id] = effectiveThemes(s.responses.filter((r) => r.qid === q.id)); });
     s.responses.forEach((r) => {
       const q = s.questions.find((x) => x.id === r.qid);
-      rows.push([r.name, r.text, new Date(r.ts).toISOString(), q ? q.text : ""]);
+      const et = byQ[r.qid];
+      const key = r.deletedAt ? r.theme : (et ? et.map.get(r.id) : r.theme);
+      const t = themeByKey(key);
+      const label = t ? ((et && et.labels[key]) ? et.labels[key] + " (" + t.name + ")" : t.name) : "";
+      rows.push([
+        r.name, r.text, new Date(r.ts).toISOString(), q ? q.text : "", label,
+        r.deletedAt ? "Deleted" : "Active",
+        r.deletedAt ? (r.deletedBy || "presenter") : "",
+        r.deletedAt ? new Date(r.deletedAt).toISOString() : ""
+      ]);
     });
     const csv = rows.map((r) => r.map(esc).join(",")).join("\r\n");
     const a = document.createElement("a");
@@ -638,7 +770,17 @@ class Component extends DCLogic {
     const pill = (on) => "border: 0; border-radius: 999px; padding: 12px 22px; font-size: 15px; font-weight: 600; cursor: " +
       (on ? "pointer" : "default") + "; background: " + (on ? accent : "#F0EFEB") + "; color: " + (on ? "#fff" : "#B4B2AA") + ";";
 
-    const liveResponses = sel && sq ? sel.responses.filter((r) => r.qid === sq.id) : [];
+    const liveResponses = sel && sq ? sel.responses.filter((r) => r.qid === sq.id && !r.deletedAt) : [];
+    const grouping = !!st.grouping;
+    const et = effectiveThemes(liveResponses);
+    const ordered = grouping
+      ? liveResponses.slice().sort((a, b) => THEMES.findIndex((t) => t.key === et.map.get(a.id)) - THEMES.findIndex((t) => t.key === et.map.get(b.id)))
+      : liveResponses;
+    const gridW = st.gridW || 900;
+    const colCount = Math.max(1, Math.floor((gridW + 14) / (250 + 14)));
+    const colW = (gridW - 14 * (colCount - 1)) / colCount;
+    const cpl = Math.max(10, (colW - 36) / 9.6);
+    const cols = Array.from({ length: colCount }, () => ({ h: 0, items: [] }));
     const responded = new Set(liveResponses.map((r) => r.name)).size;
     const partCount = sel ? Math.max(sel.participants.length, responded) : 0;
 
@@ -651,9 +793,9 @@ class Component extends DCLogic {
       : [];
     const rmAnswer = (sess, r) => () => this.ask(
       "Delete this answer?",
-      (r.name ? r.name + ": " : "") + "\u201C" + r.text + "\u201D will be removed from the screen and the export. This cannot be undone.",
+      (r.name ? r.name + ": " : "") + "\u201C" + r.text + "\u201D will be removed from the screen. It stays in the CSV export, marked as deleted.",
       "Delete answer",
-      () => this.deleteResponse(sess.id, r.id)
+      () => this.deleteResponse(sess.id, r.id, "presenter")
     );
 
     return {
@@ -723,7 +865,7 @@ class Component extends DCLogic {
       sessionCards: st.sessions.map((s) => ({
         name: s.name,
         code: fmtCode(s.code),
-        meta: s.questions.length + " q · " + s.responses.length + " answers",
+        meta: s.questions.length + " q · " + s.responses.filter((r) => !r.deletedAt).length + " answers",
         select: () => this.setState({ selectedId: s.id, scanCode: s.code }),
         style: "text-align: left; display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; border-radius: 14px; cursor: pointer; background: " +
           (s.id === st.selectedId ? "#F6F5F2" : "transparent") + "; border: 1px solid " +
@@ -736,7 +878,7 @@ class Component extends DCLogic {
       selCode: sel ? fmtCode(sel.code) : "",
       joinUrl: sel ? this.joinUrlFor(sel.code) : "",
       joinHost: this.joinHost(),
-      selResponseCount: sel ? sel.responses.length : 0,
+      selResponseCount: sel ? sel.responses.filter((r) => !r.deletedAt).length : 0,
       selParticipantCount: partCount,
       respondedCount: responded,
       respondedPct: (partCount ? Math.round((responded / partCount) * 100) : 0) + "%",
@@ -798,7 +940,7 @@ class Component extends DCLogic {
       questionRows: sel ? sel.questions.map((q, i) => ({
         num: i + 1,
         text: q.text,
-        count: sel.responses.filter((r) => r.qid === q.id).length + " answers",
+        count: sel.responses.filter((r) => r.qid === q.id && !r.deletedAt).length + " answers",
         edit: (e) => {
           const v = e.target.value;
           this.update(sel.id, (s) => ({ ...s, questions: s.questions.map((x) => (x.id === q.id ? { ...x, text: v } : x)) }));
@@ -807,14 +949,18 @@ class Component extends DCLogic {
           this.update(sel.id, (s) => ({ ...s, activeIndex: i }));
           this.setState({ view: "present" });
         },
-        up: () => {
-          if (i === 0) return;
-          this.update(sel.id, (s) => {
-            const qs = s.questions.slice();
-            qs.splice(i - 1, 0, qs.splice(i, 1)[0]);
-            return { ...s, questions: qs };
-          });
-        },
+        up: () => this.moveQuestion(sel, i, i - 1),
+        down: () => this.moveQuestion(sel, i, i + 1),
+        isFirst: i === 0,
+        isLast: i === sel.questions.length - 1,
+        upStyle: arrowStyle(i > 0),
+        downStyle: arrowStyle(i < sel.questions.length - 1),
+        dragStart: (e) => { e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", String(i)); } catch (x) {} this.setState({ dragFrom: i }); },
+        dragOver: (e) => { if (st.dragFrom == null) return; e.preventDefault(); if (st.dragOver !== i) this.setState({ dragOver: i }); },
+        drop: (e) => { e.preventDefault(); const from = st.dragFrom; this.setState({ dragFrom: null, dragOver: null }); if (from != null) this.moveQuestion(sel, from, i); },
+        dragEnd: () => this.setState({ dragFrom: null, dragOver: null }),
+        rowStyle: "display: flex; gap: 10px; align-items: center; background: #fff; border-radius: 12px; padding: 8px 12px 8px 8px; transition: border-color .15s, opacity .15s; border: 1px solid " +
+          (st.dragFrom != null && st.dragOver === i && st.dragFrom !== i ? "#2C4A7C" : "#DAD7CF") + "; opacity: " + (st.dragFrom === i ? ".45" : "1") + ";",
         remove: () => this.update(sel.id, (s) => ({
           ...s,
           questions: s.questions.filter((x) => x.id !== q.id),
@@ -832,7 +978,10 @@ class Component extends DCLogic {
         return {
           name: r.name,
           text: r.text,
-          remove: rmAnswer(sel, r),
+          remove: r.deletedAt ? () => {} : rmAnswer(sel, r),
+          deleted: !!r.deletedAt,
+          deletedNote: r.deletedAt ? "Deleted by " + (r.deletedBy === "participant" ? "participant" : "presenter") + " · kept for export" : "",
+          textStyle: "line-height: 1.4; overflow-wrap: anywhere; color: " + (r.deletedAt ? "#A8A69E; text-decoration: line-through;" : "#3C3B35;"),
           qNum: qi >= 0 ? "Q" + (qi + 1) : "—",
           qText: qi >= 0 ? sel.questions[qi].text : "Deleted question",
           when: new Date(r.ts).toLocaleString(undefined, { month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" })
@@ -840,21 +989,58 @@ class Component extends DCLogic {
       }) : [],
 
       activeQuestionText: (st.view === "phone" ? (phoneQ ? phoneQ.text : "") : (sq ? sq.text : "No questions yet")),
-      liveAnswers: liveResponses.map((r) => ({
-        name: showNames ? r.name : "Anonymous",
-        text: r.text,
-        remove: rmAnswer(sel, r),
-        anim: Date.now() - r.ts < 8000
-          ? "pop .35s ease both, fresh 5s ease-out both"
-          : "none"
-      })),
+      answerColumns: (ordered.forEach((r) => {
+        const key = et.map.get(r.id);
+        const t = grouping ? themeByKey(key) : null;
+        const fresh = Date.now() - r.ts < 8000;
+        const item = {
+          name: showNames ? r.name : "Anonymous",
+          text: r.text,
+          remove: rmAnswer(sel, r),
+          showDot: grouping,
+          dotStyle: "display: block; width: 10px; height: 10px; border-radius: 999px; background: " + (t ? t.dot : "#C8C6BE") + ";",
+          openPicker: () => this.setState({ pickerFor: st.pickerFor === r.id ? null : r.id }),
+          pickerOpen: grouping && st.pickerFor === r.id,
+          swatches: THEMES.map((th) => ({
+            label: (et.labels[th.key] ? et.labels[th.key] + " · " : "") + th.name,
+            pick: () => { this.setTheme(sel.id, r.id, th.key); this.setState({ pickerFor: null }); },
+            style: "width: 16px; height: 16px; border-radius: 999px; border: 0; padding: 0; cursor: pointer; background: " + th.dot + ";" +
+              (th.key === key ? " box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px " + th.dot + ";" : "")
+          })),
+          cardStyle: "position: relative; border-radius: 16px; padding: 14px 18px; display: flex; flex-direction: column; gap: 5px; background: " +
+            (t ? t.bg : "#F0EFEB") + "; transition: background-color .4s ease;" +
+            (fresh ? " animation: pop .35s ease both, fresh 5s ease-out;" : "")
+        };
+        const lines = Math.max(1, Math.ceil(r.text.length / cpl));
+        const c = cols.reduce((m, x) => (x.h < m.h ? x : m), cols[0]);
+        c.items.push(item);
+        c.h += 58 + lines * 25.6;
+      }), cols.map((c) => ({ items: c.items }))),
+      gridRef: (el) => {
+        if (this._gridEl === el) return;
+        if (this._ro) { this._ro.disconnect(); this._ro = null; }
+        this._gridEl = el;
+        if (!el || !window.ResizeObserver) return;
+        this._ro = new ResizeObserver((ents) => {
+          const w = Math.round(ents[0].contentRect.width);
+          if (w && Math.abs(w - (this.state.gridW || 0)) > 4) this.setState({ gridW: w });
+        });
+        this._ro.observe(el);
+      },
+      toggleGrouping: () => this.setState({ grouping: !st.grouping, pickerFor: null }),
+      groupingTrackStyle: "position: relative; width: 30px; height: 18px; border-radius: 999px; transition: background .2s; background: " + (grouping ? accent : "#D5D3CC") + ";",
+      groupingKnobStyle: "position: absolute; top: 2px; left: " + (grouping ? "14px" : "2px") + "; width: 14px; height: 14px; border-radius: 999px; background: #fff; transition: left .2s; box-shadow: 0 1px 2px rgba(0,0,0,.2);",
+      themeLegend: grouping ? THEMES.map((th) => {
+        const n = liveResponses.filter((r) => et.map.get(r.id) === th.key).length;
+        return n ? { label: et.labels[th.key] || th.name, count: n, dotStyle: "display: block; width: 9px; height: 9px; border-radius: 999px; background: " + th.dot + ";" } : null;
+      }).filter(Boolean) : [],
       presentEmpty: liveResponses.length === 0,
       questionPosition: sel && sel.questions.length
         ? "Question " + (Math.min(Math.max(sel.activeIndex || 0, 0), sel.questions.length - 1) + 1) + " of " + sel.questions.length
         : "",
       qrRef: (el) => { this._qr = el; this.drawQr(); },
       qrAdminRef: (el) => { this._qrAdmin = el; this.drawQr(); },
-      prevStyle: "width: 44px; height: 44px; border-radius: 999px; border: 0; background: #F0EFEB; font-size: 16px; cursor: pointer; color: " +
+      prevStyle: "height: 44px; padding: 0 20px; border-radius: 999px; border: 0; background: #F0EFEB; font-size: 15px; font-weight: 600; white-space: nowrap; cursor: pointer; color: " +
         (sel && (sel.activeIndex || 0) > 0 ? "#14141A" : "#C8C6BE") + ";",
       nextStyle: pill(!!(sel && sel.questions.length > (sel.activeIndex || 0) + 1)),
       prevQuestion: () => { if (sel) this.update(sel.id, (s) => ({ ...s, activeIndex: Math.max(0, (s.activeIndex || 0) - 1) })); },
@@ -923,8 +1109,8 @@ class Component extends DCLogic {
       },
       hasMine: mine.length > 0,
       myAnswers: mine.slice().reverse().map((m) => {
-        const live = phoneSess.responses.some((r) => r.id === m.id);
-        const removed = !live && Date.now() - m.ts > 6000;
+        const rec = phoneSess.responses.find((r) => r.id === m.id);
+        const removed = rec ? (!!rec.deletedAt && rec.deletedBy !== "participant") : Date.now() - m.ts > 6000;
         return {
           text: m.text,
           removed,
@@ -936,7 +1122,7 @@ class Component extends DCLogic {
             "\u201C" + m.text + "\u201D will be removed from the screen.",
             "Delete",
             () => {
-              this.deleteResponse(phoneSess.id, m.id);
+              this.deleteResponse(phoneSess.id, m.id, "participant");
               this.saveMine(this.state.mine.filter((x) => x.id !== m.id));
             }
           )
