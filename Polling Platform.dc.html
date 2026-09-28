@@ -85,7 +85,7 @@
 
   <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ true }}">
     <sc-if value="{{ hasLive }}" hint-placeholder-val="{{ false }}">
-      <div style="max-width: 1280px; width: 100%; margin: 0 auto; padding: 20px 28px 0;">
+      <div style="max-width: 1440px; width: 100%; margin: 0 auto; padding: clamp(14px, 2.4vw, 28px) clamp(14px, 2.4vw, 28px) 0;">
         <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; background: #2C4A7C; color: #fff; border-radius: 16px; padding: 14px 16px 14px 20px;">
           <div style="display: flex; align-items: center; gap: 8px; flex: none;">
             <span style="width: 8px; height: 8px; border-radius: 999px; background: #8FD19E; box-shadow: 0 0 0 4px rgba(143,209,158,.25);"></span>
@@ -278,12 +278,12 @@
         <div style="font-size: 15px; font-weight: 600; color: #9A988F;">{{ selName }}</div>
       </div>
 
-      <div style="flex: 1; display: grid; grid-template-columns: {{ presentCols }}; gap: clamp(20px, 2.6vw, 48px); padding: clamp(20px, 3.2vw, 56px) 0 0; align-items: start;">
+      <div style="{{ presentGridStyle }}">
 
-        <div style="display: flex; flex-direction: column; gap: 36px; min-width: 0;">
+        <div style="{{ presentLeftStyle }}">
           <div style="font-family: 'Sofia Pro', 'SofiaPro', Inter, system-ui, sans-serif; font-size: clamp(30px, 3.6vw, 72px); font-weight: 600; line-height: 1.12; letter-spacing: -0.025em; text-wrap: pretty;">{{ activeQuestionText }}</div>
-          <div style="display: flex; flex-direction: column; gap: 14px;">
-            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; min-height: 28px;">
+          <div style="{{ presentAnswersBoxStyle }}">
+            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; min-height: 28px; flex: none;">
               <button onClick="{{ toggleGrouping }}" style="display: flex; align-items: center; gap: 8px; background: transparent; border: 0; padding: 2px 0; cursor: pointer; font-size: 13px; font-weight: 600; color: #6B6A64;">
                 <span style="{{ groupingTrackStyle }}"><span style="{{ groupingKnobStyle }}"></span></span>
                 Group themes
@@ -320,6 +320,7 @@
                 {{ qNotesLabel }}
               </button>
             </div>
+            <div style="{{ presentScrollStyle }}">
             <div ref="{{ gridRef }}" style="display: flex; gap: 14px; align-items: flex-start;">
               <sc-for list="{{ answerColumns }}" as="col" hint-placeholder-count="3">
                 <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 14px;">
@@ -353,15 +354,16 @@
                 </div>
               </sc-for>
             </div>
+            </div>
           </div>
           <sc-if value="{{ presentEmpty }}" hint-placeholder-val="{{ false }}">
             <div style="font-size: 18px; color: #B4B2AA;">Waiting for the first answer…</div>
           </sc-if>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 16px; min-width: 0;">
+        <div style="{{ presentRightStyle }}">
           <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
-            <div ref="{{ drawerRef }}" style="position: sticky; top: 12px; background: #fff; border: 1px solid #DAD7CF; border-radius: 16px; box-shadow: 0 12px 32px rgba(20,20,26,.10); display: flex; flex-direction: column; height: calc(100vh - 220px); min-height: 380px; overflow: hidden;">
+            <div ref="{{ drawerRef }}" style="{{ drawerStyle }}">
               <div style="display: flex; align-items: flex-start; gap: 10px; padding: 16px 14px 12px 18px;">
                 <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
                   <div style="font-size: 16px; font-weight: 600; letter-spacing: -0.01em;">{{ drawerTitle }}</div>
@@ -392,21 +394,25 @@
             </div>
           </sc-if>
           <div style="{{ sideTilesStyle }}">
-          <div style="background: #F0EFEB; border-radius: 16px; padding: 22px; display: flex; flex-direction: column; align-items: center; gap: 14px;">
-            <button onClick="{{ openQrBig }}" title="Show QR full screen" style="background: #fff; padding: 12px; border-radius: 6px; line-height: 0; border: 0; cursor: zoom-in;" style-hover="box-shadow: 0 0 0 3px #D6E0F0;">
+          <div style="background: #F0EFEB; border-radius: 16px; padding: 12px 12px 10px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+            <button onClick="{{ openQrBig }}" title="Show QR full screen" style="background: #fff; padding: 8px; border-radius: 6px; line-height: 0; border: 0; cursor: zoom-in;" style-hover="box-shadow: 0 0 0 3px #D6E0F0;">
               <canvas ref="{{ qrRef }}" width="216" height="216" style="display: block; width: 216px; height: 216px;"></canvas>
             </button>
-            <div style="font-size: 20px; color: #3C3B35;">Join the conversation!</div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div style="font-size: 30px; font-weight: 700; letter-spacing: .02em; font-variant-numeric: tabular-nums; white-space: nowrap;">{{ selCode }}</div>
+            <div style="font-size: 15px; font-weight: 600; color: #3C3B35; line-height: 1.2;">Join the conversation!</div>
+            <div style="display: flex; align-items: center; gap: 2px;">
+              <div style="font-size: 24px; font-weight: 700; letter-spacing: .02em; font-variant-numeric: tabular-nums; white-space: nowrap; line-height: 1; padding-right: 4px;">{{ selCode }}</div>
+              <button onClick="{{ copyJoinPresent }}" title="{{ copyJoinPresentLabel }}" style="{{ copyJoinPresentStyle }}" style-hover="background: #E4E2DC; color: #14141A;">
+                <sc-if value="{{ joinCopied }}" hint-placeholder-val="{{ false }}">
+                  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3 3 7-7"></path></svg>
+                </sc-if>
+                <sc-if value="{{ joinNotCopied }}" hint-placeholder-val="{{ true }}">
+                  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9.5l3-3"></path><path d="M7 4.5l1.2-1.2a2.8 2.8 0 0 1 4 4L11 8.5"></path><path d="M9 11.5l-1.2 1.2a2.8 2.8 0 0 1-4-4L5 7.5"></path></svg>
+                </sc-if>
+              </button>
               <button onClick="{{ askRotate }}" title="Rotate QR code" style="width: 32px; height: 32px; border-radius: 999px; border: 0; background: transparent; cursor: pointer; color: #6B6A64; display: grid; place-items: center; padding: 0;" style-hover="background: #E4E2DC; color: #14141A;">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.7-4"></path><path d="M13.5 2.5v3h-3"></path></svg>
               </button>
             </div>
-            <button onClick="{{ copyJoinPresent }}" style="{{ copyJoinPresentStyle }}">
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9.5l3-3"></path><path d="M7 4.5l1.2-1.2a2.8 2.8 0 0 1 4 4L11 8.5"></path><path d="M9 11.5l-1.2 1.2a2.8 2.8 0 0 1-4-4L5 7.5"></path></svg>
-              {{ copyJoinPresentLabel }}
-            </button>
           </div>
           <div style="background: #F0EFEB; border-radius: 16px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px;">
             <div style="display: flex; align-items: center; gap: 8px;">
@@ -476,7 +482,7 @@
         </div>
       </div>
 
-      <div style="padding-top: 24px; position: relative;">
+      <div style="padding-top: 14px; margin-top: 10px; border-top: 1px solid #EDEBE6; position: relative; flex: none;">
         <sc-if value="{{ hasMentionList }}" hint-placeholder-val="{{ false }}">
           <div style="position: absolute; bottom: calc(100% - 18px); left: 12px; z-index: 10; min-width: 220px; background: #fff; border: 1px solid #DAD7CF; border-radius: 12px; box-shadow: 0 12px 28px rgba(20,20,26,.14); padding: 6px; display: flex; flex-direction: column;">
             <div style="font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #9A988F; padding: 6px 10px 4px;">Post on behalf of</div>
@@ -495,7 +501,7 @@
         </div>
       </div>
 
-      <div style="display: flex; align-items: center; gap: 12px; padding-top: 16px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 12px; padding-top: 12px; flex-wrap: wrap; flex: none;">
         <button onClick="{{ prevQuestion }}" style="{{ prevStyle }}">← Previous question</button>
         <div style="flex: 1;"></div>
         <div style="font-size: 14px; color: #9A988F; font-variant-numeric: tabular-nums;">{{ questionPosition }}</div>
@@ -1803,8 +1809,10 @@ class Component extends DCLogic {
       })() : [],
       copyJoinPresent: () => sel && this.copyText("join-present", this.shareUrl("join=" + sel.code)),
       copyJoinPresentLabel: st.copied === "join-present" ? "Copied" : "Copy participant link",
-      copyJoinPresentStyle: "display: flex; align-items: center; gap: 6px; background: transparent; border: 1px solid " + (st.copied === "join-present" ? "#6E9A6E" : "#C8C6BE") +
-        "; border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; color: " + (st.copied === "join-present" ? "#2F5A2F" : "#3C3B35") + ";",
+      copyJoinPresentStyle: "width: 32px; height: 32px; border-radius: 999px; border: 0; cursor: pointer; display: grid; place-items: center; padding: 0; background: " +
+        (st.copied === "join-present" ? "#DDEBDD" : "transparent") + "; color: " + (st.copied === "join-present" ? "#2F5A2F" : "#6B6A64") + ";",
+      joinCopied: st.copied === "join-present",
+      joinNotCopied: st.copied !== "join-present",
       phoneOuterStyle: "flex: 1; display: flex; flex-direction: column; align-items: center; gap: 18px; " +
         (vw >= 760 ? "padding: 48px 24px 64px; background: #E9E7E1;" : "padding: 0 0 40px;"),
       phoneFrameStyle: "width: 100%; flex: 1; display: flex; max-width: " + (vw >= 760 ? "680px" : "480px") + ";",
@@ -1961,7 +1969,16 @@ class Component extends DCLogic {
       isPresent: st.view === "present" && !st.kiosk && authed,
       presentMounted: !st.kiosk && authed && (st.view === "present" || (!!liveSess && st.music.on && st.music.track === "youtube")),
       presentWrapStyle: (st.view === "present" ? "display: flex;" : "display: none;") +
-        " flex: 1; background: #fff; flex-direction: column; padding: clamp(12px, 1.6vw, 28px) clamp(14px, 2vw, 40px) clamp(12px, 1.2vw, 20px); min-height: calc(100vh - 54px);",
+        " flex: 1; background: #fff; flex-direction: column; padding: clamp(12px, 1.6vw, 28px) clamp(14px, 2vw, 40px) clamp(12px, 1.2vw, 20px); " +
+        (vw >= 900 ? "height: calc(100vh - 54px); overflow: hidden;" : "min-height: calc(100vh - 54px);"),
+      presentGridStyle: "flex: 1; min-height: 0; display: grid; grid-template-columns: " + (vw < 900 ? "minmax(0, 1fr)" : "minmax(0, 1fr) clamp(260px, 22vw, 380px)") +
+        "; gap: clamp(20px, 2.6vw, 48px); padding: clamp(16px, 2.4vw, 44px) 0 0; " + (vw >= 900 ? "grid-template-rows: minmax(0, 1fr); align-items: stretch;" : "align-items: start;"),
+      presentLeftStyle: "display: flex; flex-direction: column; gap: clamp(16px, 2vw, 32px); min-width: 0;" + (vw >= 900 ? " min-height: 0;" : ""),
+      presentAnswersBoxStyle: "display: flex; flex-direction: column; gap: 14px;" + (vw >= 900 ? " flex: 1; min-height: 0;" : ""),
+      presentScrollStyle: vw >= 900 ? "flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 4px 6px 16px 4px; margin: -4px -6px 0 -4px;" : "",
+      presentRightStyle: "display: flex; flex-direction: column; gap: 12px; min-width: 0;" + (vw >= 900 ? " min-height: 0; overflow-y: auto; padding-bottom: 4px;" : ""),
+      drawerStyle: "background: #fff; border: 1px solid #DAD7CF; border-radius: 16px; box-shadow: 0 12px 32px rgba(20,20,26,.10); display: flex; flex-direction: column; overflow: hidden; " +
+        (vw >= 900 ? "flex: 1; min-height: 0;" : "height: 70vh; min-height: 380px;"),
       liveTimerText: (() => {
         const t = st.timer;
         if (!liveSess || !t) return "";
@@ -2312,7 +2329,7 @@ class Component extends DCLogic {
         const fmt = (cmd) => (e) => { e.preventDefault(); if (this._noteEl) this._noteEl.focus(); document.execCommand(cmd); this.noteChanged(); };
         return {
           drawerOpen: open,
-          sideTilesStyle: open ? "display: none;" : "display: flex; flex-direction: column; gap: 16px;",
+          sideTilesStyle: open ? "display: none;" : "display: flex; flex-direction: column; gap: 12px;",
           drawerRef: this._drawerRefCb,
           noteRef: this._noteRefCb,
           noteInput: () => this.noteChanged(),
