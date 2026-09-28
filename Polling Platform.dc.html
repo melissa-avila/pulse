@@ -659,7 +659,20 @@
           <sc-if value="{{ phoneAnswering }}" hint-placeholder-val="{{ false }}">
             <div style="flex: 1; display: flex; flex-direction: column; gap: 16px; padding: 24px 26px 26px;">
               <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #9A988F;">
-                <span>{{ phoneName }}</span>
+                <sc-if value="{{ nameEditing }}" hint-placeholder-val="{{ false }}">
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <input value="{{ nameEditDraft }}" onChange="{{ setNameEditDraft }}" onKeyDown="{{ nameEditKey }}" onBlur="{{ commitNameEdit }}" autoFocus="{{ true }}" maxLength="40" style="width: 150px; font-size: 14px; padding: 5px 8px; border: 1px solid #C8C6BE; border-radius: 8px; background: #fff; outline: none; color: #14141A;" />
+                    <span style="font-size: 11px; color: #9A988F;">Enter to save</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ nameNotEditing }}" hint-placeholder-val="{{ true }}">
+                  <div style="display: flex; align-items: center; gap: 2px;">
+                    <span>{{ phoneName }}</span>
+                    <button onClick="{{ startNameEdit }}" title="Edit your name" style="width: 28px; height: 28px; border-radius: 999px; border: 0; background: transparent; padding: 0; cursor: pointer; color: #9A988F; display: grid; place-items: center;" style-hover="background: #EDEBE6; color: #14141A;">
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 2.5l2 2L5 13H3v-2l8.5-8.5z"></path></svg>
+                    </button>
+                  </div>
+                </sc-if>
                 <span>{{ phonePosition }}</span>
               </div>
               <div style="font-size: clamp(22px, 2.4vw, 38px); font-weight: 600; letter-spacing: -0.02em; line-height: 1.22; text-wrap: pretty;">{{ activeQuestionText }}</div>
@@ -1229,6 +1242,42 @@ class Component extends DCLogic {
 
   ask(title, body, label, onYes) { this.setState({ confirm: { title, body, label, onYes }, menuOpen: false }); }
 
+  loadMe() { try { return JSON.parse(localStorage.getItem("pulse.me.v1") || "{}") || {}; } catch (e) { return {}; } }
+  saveMe(sid, name) {
+    const me = this.loadMe();
+    if (name) me[sid] = name; else delete me[sid];
+    try { localStorage.setItem("pulse.me.v1", JSON.stringify(me)); } catch (e) {}
+  }
+
+  restorePhoneName() {
+    const st = this.state;
+    if (!st.loaded || st.phoneName || !st.scanCode) return;
+    const s = st.sessions.find((x) => x.code === String(st.scanCode).replace(/\s/g, ""));
+    if (!s) return;
+    const n = this.loadMe()[s.id];
+    if (n) this.setState({ phoneName: n, phoneSessionId: s.id });
+  }
+
+  renameParticipant(sess, oldName, newName) {
+    if (!sess || !newName || newName === oldName) return;
+    if (sbConfig()) {
+      const q = "session_id=eq." + sess.id + "&name=eq." + encodeURIComponent(oldName);
+      this.remoteWrite(Promise.all([
+        this.sb("responses?" + q, { method: "PATCH", prefer: "return=minimal", body: { name: newName } }),
+        this.sb("participants", { method: "POST", prefer: "return=minimal,resolution=merge-duplicates", body: { session_id: sess.id, name: newName } })
+          .then(() => this.sb("participants?" + q, { method: "DELETE", prefer: "return=minimal" }))
+      ]));
+    }
+    this.persist(this.state.sessions.map((s) => (s.id === sess.id ? {
+      ...s,
+      participants: Array.from(new Set((s.participants || []).map((p) => (p === oldName ? newName : p)).concat([newName]))),
+      responses: s.responses.map((r) => (r.name === oldName ? { ...r, name: newName } : r))
+    } : s)));
+    this.saveMine(this.state.mine.map((m) => (m.sid === sess.id && m.name === oldName ? { ...m, name: newName } : m)));
+    this.saveMe(sess.id, newName);
+    this.setState({ phoneName: newName });
+  }
+
   saveMine(mine) {
     this.setState({ mine });
     try { localStorage.setItem(MINE_KEY, JSON.stringify(mine.slice(-200))); } catch (e) {}
@@ -1471,6 +1520,7 @@ class Component extends DCLogic {
     this.drawQr();
     if (this.state.auth === "mod-pending") this.resolveMod();
     if (this.state.auth === "admin-pending") this.resolveAdminLink();
+    if (!this.state.phoneName && this.state.scanCode) this.restorePhoneName();
     if (this._ytEl && this._ytEl.isConnected && this._ytUrl !== this.currentYtUrl()) this.mountYT(this._ytEl, this.currentYtUrl());
     const sel = this.selected();
     const st0 = this.state;
@@ -2535,7 +2585,22 @@ class Component extends DCLogic {
         this.persist(st.sessions.map((s) => (s.id === phoneSess.id
           ? { ...s, participants: s.participants.includes(n) ? s.participants : [...s.participants, n] }
           : s)));
+        this.saveMe(phoneSess.id, n);
         this.setState({ phoneName: n, phoneSessionId: phoneSess.id, nameDraft: "" });
+      },
+      nameEditing: st.nameEdit != null,
+      nameNotEditing: st.nameEdit == null,
+      nameEditDraft: st.nameEdit || "",
+      startNameEdit: () => this.setState({ nameEdit: st.phoneName }),
+      setNameEditDraft: (e) => this.setState({ nameEdit: e.target.value }),
+      commitNameEdit: () => {
+        const n = String(this.state.nameEdit || "").trim();
+        this.setState({ nameEdit: null });
+        if (n && phoneSess) this.renameParticipant(phoneSess, this.state.phoneName, n);
+      },
+      nameEditKey: (e) => {
+        if (e.key === "Enter") { e.preventDefault(); e.target.blur(); }
+        else if (e.key === "Escape") { this._nameCancel = true; this.setState({ nameEdit: null }); }
       },
 
       phoneAnswering: joined && !!phoneQ,
