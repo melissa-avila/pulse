@@ -27,6 +27,7 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          ADMIN_PASSCODE: ${{ secrets.ADMIN_PASSCODE }}
         run: |
           mkdir -p _site
           rsync -a ./ _site/ \
@@ -34,6 +35,8 @@ jobs:
             --exclude 'uploads' --exclude 'screenshots' \
             --exclude 'Sample Data Loader.dc.html' --exclude '*.sql'
           printf 'window.SUPABASE = { url: "%s", anonKey: "%s" };\n' "$SUPABASE_URL" "$SUPABASE_KEY" > _site/supabase-config.js
+          if [ -n "$ADMIN_PASSCODE" ]; then HASH=$(printf '%s' "$ADMIN_PASSCODE" | sha256sum | cut -d' ' -f1); else HASH=""; fi
+          printf 'window.PULSE_ADMIN = { passcodeHash: "%s" };\n' "$HASH" > _site/admin-config.js
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
