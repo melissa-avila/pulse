@@ -1471,6 +1471,7 @@ class Component extends DCLogic {
     this.drawQr();
     if (this.state.auth === "mod-pending") this.resolveMod();
     if (this.state.auth === "admin-pending") this.resolveAdminLink();
+    if (this._ytEl && this._ytEl.isConnected && this._ytUrl !== this.currentYtUrl()) this.mountYT(this._ytEl, this.currentYtUrl());
     const sel = this.selected();
     const st0 = this.state;
     const live = st0.liveId ? st0.sessions.find((s) => s.id === st0.liveId && (s.activeIndex || 0) >= 0) : null;
@@ -1584,6 +1585,22 @@ class Component extends DCLogic {
     return this._ytApi;
   }
 
+  // Stable ref: an inline arrow would detach/re-attach on every render (the timer re-renders each second),
+  // which destroyed and rebuilt the player constantly.
+  _ytRefCb = (el) => {
+    if (!el) { clearTimeout(this._ytDetachT); this._ytDetachT = setTimeout(() => { if (this._ytEl && !this._ytEl.isConnected) this.teardownYT(); }, 0); return; }
+    if (el === this._ytEl && this._ytUrl === this.currentYtUrl()) return;
+    this._ytEl = el;
+    this.mountYT(el, this.currentYtUrl());
+  };
+
+  currentYtUrl() { const s = this.selected(); return (s && s.settings && s.settings.youtubeUrl) || ""; }
+
+  teardownYT() {
+    if (this._yt) { try { this._yt.destroy(); } catch (e) {} this._yt = null; }
+    this._ytEl = null; this._ytUrl = null;
+  }
+
   mountYT(el, url) {
     const yt = parseYouTube(url);
     this._ytUrl = url;
@@ -1602,6 +1619,13 @@ class Component extends DCLogic {
           onReady: (e) => {
             e.target.setVolume(Math.round(this.state.music.vol * 100));
             if (this._ytPlayWhenReady) { e.target.playVideo(); this._ytPlayWhenReady = false; }
+          },
+          onStateChange: (e) => {
+            // keep the Pulse music button in sync when the YouTube controls are used directly
+            const playing = e.data === 1, paused = e.data === 2 || e.data === 0;
+            const m = this.state.music;
+            if (playing && (!m.on || m.track !== "youtube")) { if (window.PulseAudio) window.PulseAudio.stop(); this.setState({ music: { ...m, on: true, track: "youtube" } }); }
+            else if (paused && m.on && m.track === "youtube") this.setState({ music: { ...m, on: false } });
           }
         }
       });
@@ -2012,12 +2036,7 @@ class Component extends DCLogic {
             if (this._yt && this._yt.setVolume) this._yt.setVolume(Math.round(v * 100));
           },
           isYouTube: curTrack.id === "youtube",
-          ytRef: (el) => {
-            if (el === this._ytEl) return;
-            this._ytEl = el;
-            if (!el) { if (this._yt) { try { this._yt.destroy(); } catch (e) {} this._yt = null; } this._ytUrl = null; return; }
-            this.mountYT(el, set.youtubeUrl || "");
-          },
+          ytRef: this._ytRefCb,
 
           openConn: () => {
             const c = runtimeSb() || fileSb() || {};
