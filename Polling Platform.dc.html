@@ -231,11 +231,11 @@
             </div>
             <sc-if value="{{ hasAnswers }}" hint-placeholder-val="{{ true }}">
               <div style="border: 1px solid #DAD7CF; border-radius: 12px; overflow-x: auto; background: #fff;"><div style="min-width: 560px;">
-                <div style="display: grid; grid-template-columns: minmax(80px, 110px) minmax(130px, 0.9fr) minmax(150px, 1.2fr) minmax(76px, auto) 28px; gap: 12px; padding: 10px 14px; background: #EDEBE6; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #6B6A64;">
+                <div style="display: grid; grid-template-columns: 110px minmax(0, 0.9fr) minmax(0, 1.2fr) 118px 28px; gap: 12px; padding: 10px 14px; background: #EDEBE6; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #6B6A64;">
                   <div>Name</div><div>Question</div><div>Answer</div><div>Received</div><div></div>
                 </div>
                 <sc-for list="{{ answerRows }}" as="r" hint-placeholder-count="3">
-                  <div style="display: grid; grid-template-columns: minmax(80px, 110px) minmax(130px, 0.9fr) minmax(150px, 1.2fr) minmax(76px, auto) 28px; gap: 12px; padding: 11px 14px; border-top: 1px solid #EDEBE6; font-size: 14px; align-items: start;">
+                  <div style="display: grid; grid-template-columns: 110px minmax(0, 0.9fr) minmax(0, 1.2fr) 118px 28px; gap: 12px; padding: 11px 14px; border-top: 1px solid #EDEBE6; font-size: 14px; align-items: start;">
                     <div style="font-weight: 600;">{{ r.name }}</div>
                     <div style="color: #6B6A64; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere;"><span style="font-weight: 600; color: #14141A;">{{ r.qNum }}</span> {{ r.qText }}</div>
                     <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
@@ -245,7 +245,7 @@
                       </sc-if>
                     </div>
                     <div style="color: #9A988F; font-size: 12px; font-variant-numeric: tabular-nums;">{{ r.when }}</div>
-                    <button onClick="{{ r.remove }}" disabled="{{ r.deleted }}" title="Delete answer" style="width: 28px; height: 28px; border-radius: 999px; border: 0; background: transparent; color: #9A988F; cursor: pointer; font-size: 13px; margin-top: -4px;" style-hover="background: #FBEDEB; color: #C0392B;">✕</button>
+                    <button onClick="{{ r.remove }}" title="Delete answer permanently" style="width: 28px; height: 28px; border-radius: 999px; border: 0; background: transparent; color: #9A988F; cursor: pointer; font-size: 13px; margin-top: -4px;" style-hover="background: #FBEDEB; color: #C0392B;">✕</button>
                   </div>
                 </sc-for>
               </div></div>
@@ -1217,6 +1217,11 @@ class Component extends DCLogic {
     try { localStorage.setItem(MINE_KEY, JSON.stringify(mine.slice(-200))); } catch (e) {}
   }
 
+  purgeResponse(sessId, rid) {
+    if (sbConfig()) this.remoteWrite(this.sb("responses?id=eq." + rid, { method: "DELETE", prefer: "return=minimal" }));
+    this.persist(this.state.sessions.map((s) => (s.id === sessId ? { ...s, responses: s.responses.filter((r) => r.id !== rid) } : s)));
+  }
+
   deleteResponse(sessId, rid, by) {
     const now = new Date();
     if (sbConfig()) this.remoteWrite(this.sb("responses?id=eq." + rid, {
@@ -1587,7 +1592,13 @@ class Component extends DCLogic {
 
   async initAuth() {
     const h = adminHash();
-    if (!h) { this.setState({ auth: "owner" }); return; }
+    if (!h) {
+      const hosted = /github\.io$/i.test(window.location.hostname);
+      if (!hosted) { this.setState({ auth: "owner" }); return; }
+      if (this._modReq) { this.setState({ auth: "mod-pending" }); this.resolveMod(); return; }
+      this.setState({ auth: "locked", passError: "The admin passcode isn't set up on this site yet, so admin is locked. Add the ADMIN_PASSCODE secret and redeploy." });
+      return;
+    }
     const pm = /[#&]admin=([^&]+)/.exec(window.location.hash);
     if (pm) {
       const pass = decodeURIComponent(pm[1]);
@@ -2244,7 +2255,12 @@ class Component extends DCLogic {
         return {
           name: r.name,
           text: r.text,
-          remove: r.deletedAt ? () => {} : rmAnswer(sel, r),
+          remove: () => this.ask(
+            "Permanently delete this answer?",
+            (r.name ? r.name + ": " : "") + "\u201C" + r.text + "\u201D will be removed from the session and from the CSV export. This can't be undone.",
+            "Delete answer",
+            () => this.purgeResponse(sel.id, r.id)
+          ),
           deleted: !!r.deletedAt,
           deletedNote: r.deletedAt ? "Deleted by " + (r.deletedBy === "participant" ? "participant" : "presenter") + " · kept for export" : "",
           textStyle: "line-height: 1.4; overflow-wrap: anywhere; color: " + (r.deletedAt ? "#A8A69E; text-decoration: line-through;" : "#3C3B35;"),
