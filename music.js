@@ -163,8 +163,9 @@
   function beep() {
     ac();
     var t = ctx.currentTime + 0.05;
-    tone(t, out, mtof(79), 0.18, { gain: 0.16, attack: 0.02, release: 0.6 });
-    tone(t + 0.28, out, mtof(72), 0.25, { gain: 0.16, attack: 0.02, release: 0.9 });
+    [[79, 0], [72, 0.3], [79, 0.9], [72, 1.2], [79, 1.8], [84, 2.1]].forEach(function (p, i) {
+      tone(t + p[1], out, mtof(p[0]), 0.2, { gain: 0.15, attack: 0.02, release: i === 5 ? 1.4 : 0.6 });
+    });
   }
 
   window.PulseAudio = {

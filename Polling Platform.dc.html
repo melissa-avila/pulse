@@ -73,7 +73,7 @@
             <span style="font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700;">Live now</span>
           </div>
           <div style="flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 2px;">
-            <div style="font-size: 15px; font-weight: 600;">{{ liveName }} · {{ livePosition }}</div>
+            <div style="font-size: 15px; font-weight: 600;">{{ liveName }} · {{ livePosition }}{{ liveTimerText }}</div>
             <div style="font-size: 14px; color: #D6E0F0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ liveQuestion }}</div>
           </div>
           <div style="display: flex; gap: 8px; flex: none;">
@@ -83,7 +83,7 @@
         </div>
       </div>
     </sc-if>
-    <div style="display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 24px; padding: 28px; align-items: start; max-width: 1280px; width: 100%; margin: 0 auto;">
+    <div style="display: grid; grid-template-columns: {{ adminCols }}; gap: 24px; padding: clamp(14px, 2.4vw, 28px); align-items: start; max-width: 1440px; width: 100%; margin: 0 auto;">
 
       <div style="display: flex; flex-direction: column; gap: 12px;">
         <div style="display: flex; align-items: baseline; justify-content: space-between;">
@@ -233,23 +233,23 @@
     </div>
   </sc-if>
 
-  <sc-if value="{{ isPresent }}" hint-placeholder-val="{{ false }}">
-    <div style="flex: 1; background: #fff; display: flex; flex-direction: column; padding: 20px 28px 16px; min-height: calc(100vh - 54px);">
+  <sc-if value="{{ presentMounted }}" hint-placeholder-val="{{ false }}">
+    <div style="{{ presentWrapStyle }}">
 
       <div style="display: flex; align-items: center; gap: 12px;">
         <button onClick="{{ switchToAdmin }}" style="background: #F0EFEB; border: 0; border-radius: 999px; padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer; color: #3C3B35; white-space: nowrap;" style-hover="background: #E4E2DC;">← Switch to admin view</button>
         <div style="flex: 1;"></div>
-        <div style="background: #F0EFEB; border-radius: 999px; padding: 12px 22px; display: flex; align-items: center; gap: 12px; font-size: 19px; min-width: 0; max-width: 100%;">
+        <div style="background: #F0EFEB; border-radius: 999px; padding: 10px 20px; display: flex; align-items: center; gap: 12px; font-size: clamp(15px, 1.2vw, 22px); min-width: 0; max-width: 100%;">
           <span style="color: #3C3B35; white-space: nowrap;">Scan the QR code to join</span>
         </div>
         <div style="flex: 1;"></div>
         <div style="font-size: 15px; font-weight: 600; color: #9A988F;">{{ selName }}</div>
       </div>
 
-      <div style="flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 300px); gap: 40px; padding: 48px 8px 0; align-items: start;">
+      <div style="flex: 1; display: grid; grid-template-columns: {{ presentCols }}; gap: clamp(20px, 2.6vw, 48px); padding: clamp(20px, 3.2vw, 56px) 0 0; align-items: start;">
 
         <div style="display: flex; flex-direction: column; gap: 36px; min-width: 0;">
-          <div style="font-family: 'Sofia Pro', 'SofiaPro', Inter, system-ui, sans-serif; font-size: 52px; font-weight: 600; line-height: 1.12; letter-spacing: -0.025em; text-wrap: pretty;">{{ activeQuestionText }}</div>
+          <div style="font-family: 'Sofia Pro', 'SofiaPro', Inter, system-ui, sans-serif; font-size: clamp(30px, 3.6vw, 72px); font-weight: 600; line-height: 1.12; letter-spacing: -0.025em; text-wrap: pretty;">{{ activeQuestionText }}</div>
           <div style="display: flex; flex-direction: column; gap: 14px;">
             <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; min-height: 28px;">
               <button onClick="{{ toggleGrouping }}" style="display: flex; align-items: center; gap: 8px; background: transparent; border: 0; padding: 2px 0; cursor: pointer; font-size: 13px; font-weight: 600; color: #6B6A64;">
@@ -298,7 +298,7 @@
                         </sc-if>
                         <button onClick="{{ a.remove }}" title="Delete answer" style="width: 22px; height: 22px; border-radius: 999px; border: 0; background: transparent; color: #A8A69E; cursor: pointer; font-size: 11px; line-height: 1; padding: 0;" style-hover="background: #FBEDEB; color: #C0392B;">✕</button>
                       </div>
-                      <div style="font-size: 19px; line-height: 1.35; color: #14141A; text-wrap: pretty; overflow-wrap: anywhere;">{{ a.text }}</div>
+                      <div style="font-size: clamp(16px, 1.25vw, 26px); line-height: 1.35; color: #14141A; text-wrap: pretty; overflow-wrap: anywhere;">{{ a.text }}</div>
                       <sc-if value="{{ a.pickerOpen }}" hint-placeholder-val="{{ false }}">
                         <div style="position: absolute; top: 34px; right: 26px; z-index: 5; display: flex; gap: 6px; padding: 7px 8px; background: #fff; border-radius: 999px; box-shadow: 0 6px 18px rgba(20,20,26,.14);">
                           <sc-for list="{{ a.swatches }}" as="w" hint-placeholder-count="6">
@@ -410,7 +410,7 @@
         </div>
       </div>
 
-      <div style="display: flex; align-items: center; gap: 12px; padding-top: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; padding-top: 16px; flex-wrap: wrap;">
         <button onClick="{{ prevQuestion }}" style="{{ prevStyle }}">← Previous question</button>
         <div style="flex: 1;"></div>
         <div style="font-size: 14px; color: #9A988F; font-variant-numeric: tabular-nums;">{{ questionPosition }}</div>
@@ -429,16 +429,16 @@
         <div style="font-size: 15px; font-weight: 600; color: #9A988F;">{{ boardSession }}</div>
       </div>
 
-      <div style="flex: 1; min-height: 0; width: 100%; max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+      <div style="flex: 1; min-height: 0; width: 100%; max-width: min(1200px, 100%); margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 10px;">
         <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;">
-          <div style="font-size: 44px; font-weight: 600; line-height: 1.1; letter-spacing: -0.025em;">Top contributors</div>
+          <div style="font-size: clamp(30px, 3.4vw, 64px); font-weight: 600; line-height: 1.1; letter-spacing: -0.025em;">Top contributors</div>
           <div style="font-size: 17px; color: #6B6A64;">{{ boardSummary }}</div>
         </div>
         <div style="height: 28px; flex: none; position: relative; width: 100%; text-align: center;">
           <div style="{{ drumStyle }}">And the top contributor is…</div>
         </div>
 
-        <div style="display: flex; justify-content: center; align-items: flex-end; gap: 16px; flex: none; width: 100%; padding-top: 18px;">
+        <div style="display: flex; justify-content: center; align-items: flex-end; gap: clamp(8px, 1.2vw, 20px); flex: none; width: 100%; padding-top: 18px;">
           <sc-for list="{{ podium }}" as="p" hint-placeholder-count="3">
             <div style="{{ p.cardStyle }}">
               <div style="{{ p.medalWrapStyle }}">
@@ -1056,10 +1056,13 @@ class Component extends DCLogic {
   }
 
   componentDidMount() {
+    this._onResize = () => { const w = window.innerWidth; if (Math.abs(w - (this.state.vw || 0)) > 8) this.setState({ vw: w }); };
+    window.addEventListener("resize", this._onResize);
     this._tick = setInterval(() => {
       const t = this.state.timer;
       if (!t || !t.endsAt) return;
       if (t.endsAt - Date.now() <= 0) {
+        this.stopMusic();
         if (window.PulseAudio) window.PulseAudio.beep();
         this.setState({ timer: { ...t, endsAt: null, remaining: 0, done: true } });
       } else this.setState({ now: Date.now() });
@@ -1115,18 +1118,22 @@ class Component extends DCLogic {
     if (this._onStorage) window.removeEventListener("storage", this._onStorage);
     if (this._poll) clearInterval(this._poll);
     if (this._tick) clearInterval(this._tick);
+    if (this._onResize) window.removeEventListener("resize", this._onResize);
     if (window.PulseAudio) window.PulseAudio.stop();
   }
   componentDidUpdate() {
     this.drawQr();
     const sel = this.selected();
-    const q = this.state.view === "present" && sel ? this.activeQuestion(sel) : null;
+    const st0 = this.state;
+    const live = st0.liveId ? st0.sessions.find((s) => s.id === st0.liveId && (s.activeIndex || 0) >= 0) : null;
+    const stageSess = st0.view === "present" ? sel : live;
+    const q = stageSess ? this.activeQuestion(stageSess) : null;
     const qid = q ? q.id : null;
     if (qid !== this._lastQid) {
       this._lastQid = qid;
       this.stopMusic();
       if (q && (!this.state.timer || this.state.timer.qid !== qid)) {
-        const tot = this.timerDefault(sel);
+        const tot = this.timerDefault(stageSess);
         this.setState({ timer: { qid, total: tot, remaining: tot, endsAt: null, done: false }, timerEdit: false });
       }
     }
@@ -1347,9 +1354,12 @@ class Component extends DCLogic {
       ? liveResponses.slice().sort((a, b) => ALL_THEMES.findIndex((t) => t.key === et.map.get(a.id)) - ALL_THEMES.findIndex((t) => t.key === et.map.get(b.id)))
       : liveResponses;
     const gridW = st.gridW || 900;
-    const colCount = Math.max(1, Math.floor((gridW + 14) / (250 + 14)));
+    const vw = st.vw || window.innerWidth || 1280;
+    const minCol = Math.max(220, Math.min(360, vw * 0.17));
+    const colCount = Math.max(1, Math.floor((gridW + 14) / (minCol + 14)));
     const colW = (gridW - 14 * (colCount - 1)) / colCount;
-    const cpl = Math.max(10, (colW - 36) / 9.6);
+    const fz = Math.min(26, Math.max(16, vw * 0.0125));
+    const cpl = Math.max(10, (colW - 36) / (fz * 0.5));
     const cols = Array.from({ length: colCount }, () => ({ h: 0, items: [] }));
     const pNames = (() => {
       if (!sel) return [];
@@ -1406,6 +1416,8 @@ class Component extends DCLogic {
         ? "Supabase error — " + st.backendError.slice(0, 80)
         : (sbConfig() ? "live · synced via Supabase" : "local only · data stays in this browser"),
       showChrome: !st.kiosk,
+      adminCols: vw < 860 ? "minmax(0, 1fr)" : "minmax(240px, 300px) minmax(0, 1fr)",
+      presentCols: vw < 900 ? "minmax(0, 1fr)" : "minmax(0, 1fr) clamp(260px, 22vw, 380px)",
       ...(() => {
         const set = (sel && sel.settings) || {};
         const showP = !!set.showProgress;
@@ -1538,6 +1550,18 @@ class Component extends DCLogic {
       },
       isAdmin: st.view === "admin" && !st.kiosk,
       isPresent: st.view === "present" && !st.kiosk,
+      presentMounted: !st.kiosk && (st.view === "present" || (!!liveSess && st.music.on && st.music.track === "youtube")),
+      presentWrapStyle: (st.view === "present" ? "display: flex;" : "display: none;") +
+        " flex: 1; background: #fff; flex-direction: column; padding: clamp(12px, 1.6vw, 28px) clamp(14px, 2vw, 40px) clamp(12px, 1.2vw, 20px); min-height: calc(100vh - 54px);",
+      liveTimerText: (() => {
+        const t = st.timer;
+        if (!liveSess || !t) return "";
+        const q = this.activeQuestion(liveSess);
+        if (!q || t.qid !== q.id) return "";
+        if (t.done) return " · Time's up";
+        if (!t.endsAt) return "";
+        return " · " + fmtTime(t.endsAt - Date.now()) + " left";
+      })(),
       isPhone: st.view === "phone",
       goAdmin: () => this.setState({ view: "admin" }),
       goPresent: () => {
