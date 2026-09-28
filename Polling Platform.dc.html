@@ -198,12 +198,29 @@
                 Sentiment grouping
               </button>
               <sc-for list="{{ themeLegend }}" as="t" hint-placeholder-count="0">
-                <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #6B6A64;">
-                  <span style="{{ t.dotStyle }}"></span>
-                  <span>{{ t.label }}</span>
-                  <span style="color: #B4B2AA; font-variant-numeric: tabular-nums;">{{ t.count }}</span>
+                <div style="{{ t.chipStyle }}">
+                  <sc-if value="{{ t.editing }}" hint-placeholder-val="{{ false }}">
+                    <span style="{{ t.dotStyle }}"></span>
+                    <input value="{{ t.draft }}" onChange="{{ t.setDraft }}" onKeyDown="{{ t.keyDown }}" onBlur="{{ t.commit }}" autoFocus="{{ true }}" style="width: 120px; font-size: 13px; padding: 2px 6px; border: 1px solid #C8C6BE; border-radius: 6px; background: #fff; outline: none;" />
+                  </sc-if>
+                  <sc-if value="{{ t.notEditing }}" hint-placeholder-val="{{ true }}">
+                    <button onClick="{{ t.toggleFocus }}" title="{{ t.focusTitle }}" style="display: flex; align-items: center; gap: 6px; background: transparent; border: 0; padding: 0; font-size: 13px; color: inherit; cursor: pointer;">
+                      <span style="{{ t.dotStyle }}"></span>
+                      <span>{{ t.label }}</span>
+                      <span style="color: #B4B2AA; font-variant-numeric: tabular-nums;">{{ t.count }}</span>
+                    </button>
+                    <sc-if value="{{ t.canRename }}" hint-placeholder-val="{{ true }}">
+                      <button onClick="{{ t.startEdit }}" title="Rename theme" style="width: 20px; height: 20px; border-radius: 999px; border: 0; background: transparent; padding: 0; cursor: pointer; color: #B4B2AA; display: grid; place-items: center;" style-hover="background: rgba(20,20,26,.07); color: #14141A;">
+                        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 2.5l2 2L5 13H3v-2l8.5-8.5z"></path></svg>
+                      </button>
+                    </sc-if>
+                  </sc-if>
                 </div>
               </sc-for>
+              <sc-if value="{{ groupingOn }}" hint-placeholder-val="{{ false }}">
+                <div style="flex: 1;"></div>
+                <button onClick="{{ rerunThemes }}" style="background: transparent; border: 1px solid #DAD7CF; border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 600; color: #6B6A64; cursor: pointer; white-space: nowrap;" style-hover="border-color: #14141A; color: #14141A;">Re-run sentiment analysis</button>
+              </sc-if>
             </div>
             <div ref="{{ gridRef }}" style="display: flex; gap: 14px; align-items: flex-start;">
               <sc-for list="{{ answerColumns }}" as="col" hint-placeholder-count="3">
@@ -432,49 +449,100 @@ const THEMES = [
   { key: "lilac", name: "Purple", bg: "#E6DFF2", dot: "#8C76B8" },
   { key: "teal",  name: "Teal",   bg: "#D5ECEA", dot: "#4F9B94" }
 ];
-const STOP = new Set("a an and are as at be been but by can could did do does doing for from had has have having he her here him his how i if in into is it its just me more most my no not now of on once only or other our out over own same she should so some such than that the their them then there these they this those through to too under until up very was we were what when where which while who why will with would you your yours im ive dont cant its it's i'm i've don't can't really also like get got make one thing things lot much many way think know want need use using used".split(" "));
-function tokens(t) {
+const UNKNOWN = { key: "unknown", name: "Gray", bg: "#E9E7E2", dot: "#9A988F" };
+const ALL_THEMES = THEMES.concat([UNKNOWN]);
+const STOP = new Set(("a an and are as at be been but by can could did do does doing for from had has have having he her here him his how i if in into is it its just me more most my no not now of on once only or other our out over own same she should so some such than that the their them then there these they this those through to too under until up very was we were what when where which while who why will with would you your yours im ive dont cant its it's i'm i've don't can't really also like get got make one thing things lot much many way think know want need use using used " +
+  "love hate great good bad nice cool awesome amazing terrible awful hard easy simple difficult tricky confusing confused confuse clear clearer unclear better worse best worst helpful useful useless annoying fine okay ok happy sad understand every all any new always never sometime")
+  .split(/\s+/));
+function stem(w) {
+  let x = w.replace(/'s$/, "");
+  x = x.replace(/(ings|ing|ers|er|ied|ies|ed|es|s|ly|ment|ments)$/, "");
+  x = x.replace(/e$/, "");
+  return x;
+}
+function words(t) {
   return String(t || "").toLowerCase().replace(/[^a-z0-9\s']/g, " ").split(/\s+/)
-    .filter((w) => w.length > 2 && !STOP.has(w))
-    .map((w) => w.replace(/'s$/, "").replace(/(ing|ed|ly|es|s)$/, "").slice(0, 7))
-    .filter((w) => w.length > 2);
+    .filter((w) => w.length > 2 && !STOP.has(w) && /[aeiouy]/.test(w));
 }
-function autoThemes(responses) {
-  const groups = [];
-  const assign = new Map();
-  responses.forEach((r) => {
-    const tk = new Set(tokens(r.text));
-    let best = -1, bestSim = 0;
-    groups.forEach((g, gi) => {
-      let inter = 0;
-      tk.forEach((w) => { if (g.words.has(w)) inter++; });
-      const sim = tk.size ? inter / Math.min(tk.size, g.words.size || 1) : 0;
-      if (sim > bestSim) { bestSim = sim; best = gi; }
+// Theme = a keyword shared by at least 2 answers. Biggest keyword wins first; answers are
+// assigned to the first theme they match. Anything with no shared keyword -> Unknown.
+function autoThemes(responses, used) {
+  const free = THEMES.filter((t) => !(used || []).includes(t.key));
+  const perAns = responses.map((r) => {
+    const map = {};
+    words(r.text).forEach((w) => { const st = stem(w); if (st.length > 2 && !STOP.has(st)) (map[st] = map[st] || []).push(w); });
+    return { id: r.id, stems: map };
+  });
+  const df = {}, surface = {};
+  perAns.forEach((a) => Object.keys(a.stems).forEach((st) => {
+    df[st] = (df[st] || 0) + 1;
+    a.stems[st].forEach((w) => { surface[st] = surface[st] || {}; surface[st][w] = (surface[st][w] || 0) + 1; });
+  }));
+  const assign = new Map(), labels = {}, defs = {};
+  let remaining = perAns.slice();
+  let slot = 0;
+  while (slot < free.length) {
+    const counts = {};
+    remaining.forEach((a) => Object.keys(a.stems).forEach((st) => { counts[st] = (counts[st] || 0) + 1; }));
+    const best = Object.keys(counts).filter((st) => counts[st] >= 2)
+      .sort((x, y) => counts[y] - counts[x] || df[y] - df[x] || x.localeCompare(y))[0];
+    if (!best) break;
+    const key = free[slot].key;
+    defs[key] = best;
+    const sf = surface[best];
+    const word = Object.keys(sf).sort((x, y) => sf[y] - sf[x] || x.length - y.length)[0];
+    labels[key] = word.charAt(0).toUpperCase() + word.slice(1);
+    remaining = remaining.filter((a) => {
+      if (a.stems[best]) { assign.set(a.id, key); return false; }
+      return true;
     });
-    let gi = best;
-    if (bestSim < 0.34 || gi < 0) {
-      if (groups.length < THEMES.length) { groups.push({ words: new Set(), freq: {} }); gi = groups.length - 1; }
-      else if (gi < 0) gi = groups.reduce((m, g, i) => (Object.keys(g.freq).length < Object.keys(groups[m].freq).length ? i : m), 0);
-    }
-    const g = groups[gi];
-    tk.forEach((w) => { g.words.add(w); g.freq[w] = (g.freq[w] || 0) + 1; });
-    assign.set(r.id, THEMES[gi].key);
-  });
-  const labels = {};
-  groups.forEach((g, gi) => {
-    const top = Object.keys(g.freq).sort((a, b) => g.freq[b] - g.freq[a])[0];
-    labels[THEMES[gi].key] = top ? top.charAt(0).toUpperCase() + top.slice(1) : THEMES[gi].name;
-  });
-  return { assign, labels };
+    slot++;
+  }
+  remaining.forEach((a) => assign.set(a.id, UNKNOWN.key));
+  labels[UNKNOWN.key] = "Unknown";
+  return { assign, labels, defs };
 }
-function effectiveThemes(responses) {
+function stemsOf(text) {
+  const out = new Set();
+  words(text).forEach((w) => { const st = stem(w); if (st.length > 2 && !STOP.has(st)) out.add(st); });
+  return out;
+}
+function effectiveThemes(responses, saved) {
   const live = responses.filter((r) => !r.deletedAt);
-  const auto = autoThemes(live);
-  const out = new Map();
-  live.forEach((r) => out.set(r.id, r.theme || auto.assign.get(r.id)));
-  return { map: out, labels: auto.labels };
+  const map = new Map();
+  if (!saved || !saved.length) {
+    const auto = autoThemes(live, []);
+    live.forEach((r) => map.set(r.id, r.theme || auto.assign.get(r.id)));
+    return { map, labels: auto.labels, defs: auto.defs, frozen: false };
+  }
+  const labels = { unknown: "Unknown" }, defs = {};
+  saved.forEach((t) => { labels[t.key] = t.label; defs[t.key] = (t.stems || [])[0]; });
+  const unmatched = [];
+  live.forEach((r) => {
+    if (r.theme) { map.set(r.id, r.theme); return; }
+    const st = stemsOf(r.text);
+    let best = null, bestN = 0;
+    saved.forEach((t) => {
+      const n = (t.stems || []).filter((x) => st.has(x)).length;
+      if (n > bestN) { bestN = n; best = t.key; }
+    });
+    if (best) map.set(r.id, best); else unmatched.push(r);
+  });
+  const auto = autoThemes(unmatched, saved.map((t) => t.key));
+  unmatched.forEach((r) => map.set(r.id, auto.assign.get(r.id)));
+  Object.keys(auto.defs).forEach((k) => { labels[k] = auto.labels[k]; defs[k] = auto.defs[k]; });
+  return { map, labels, defs, frozen: true };
 }
-function themeByKey(k) { return THEMES.find((t) => t.key === k) || null; }
+function freezeThemes(et, prevSaved) {
+  const prev = {};
+  (prevSaved || []).forEach((t) => { prev[t.key] = t; });
+  return THEMES.filter((t) => et.labels[t.key] || prev[t.key]).map((t) => ({
+    key: t.key,
+    label: et.labels[t.key] || (prev[t.key] && prev[t.key].label) || t.name,
+    stems: (prev[t.key] && prev[t.key].stems && prev[t.key].stems.length) ? prev[t.key].stems : (et.defs[t.key] ? [et.defs[t.key]] : [])
+  }));
+}
+function themeByKey(k) { return ALL_THEMES.find((t) => t.key === k) || null; }
 
 function sbConfig() {
   const c = window.SUPABASE;
@@ -498,6 +566,33 @@ class Component extends DCLogic {
     confirm: null,
     mine: loadMine()
   };
+
+  freezeQuestion(sel, q, et, rename) {
+    if (!sel || !q) return;
+    this.update(sel.id, (s) => ({
+      ...s,
+      questions: s.questions.map((x) => {
+        if (x.id !== q.id) return x;
+        let themes = freezeThemes(et, x.themes);
+        if (rename) themes = themes.map((t) => (t.key === rename.key ? { ...t, label: rename.label } : t));
+        return { ...x, themes };
+      })
+    }));
+  }
+
+  rerunQuestion(sel, q) {
+    if (sbConfig()) {
+      this.remoteWrite(this.sb("responses?session_id=eq." + sel.id + "&question_id=eq." + encodeURIComponent(q.id), {
+        method: "PATCH", prefer: "return=minimal", body: { theme: null }
+      }));
+    }
+    this.update(sel.id, (s) => ({
+      ...s,
+      questions: s.questions.map((x) => { if (x.id !== q.id) return x; const y = { ...x }; delete y.themes; return y; }),
+      responses: s.responses.map((r) => (r.qid === q.id ? { ...r, theme: null } : r))
+    }));
+    this.setState({ pickerFor: null, editTheme: null });
+  }
 
   moveQuestion(sel, from, to) {
     if (!sel || from === to || to < 0 || to >= sel.questions.length) return;
@@ -736,13 +831,13 @@ class Component extends DCLogic {
     const esc = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
     const rows = [["Name", "Answer", "Timestamp", "Question", "Theme", "Status", "Deleted by", "Deleted at"]];
     const byQ = {};
-    s.questions.forEach((q) => { byQ[q.id] = effectiveThemes(s.responses.filter((r) => r.qid === q.id)); });
+    s.questions.forEach((q) => { byQ[q.id] = effectiveThemes(s.responses.filter((r) => r.qid === q.id), q.themes); });
     s.responses.forEach((r) => {
       const q = s.questions.find((x) => x.id === r.qid);
       const et = byQ[r.qid];
       const key = r.deletedAt ? r.theme : (et ? et.map.get(r.id) : r.theme);
       const t = themeByKey(key);
-      const label = t ? ((et && et.labels[key]) ? et.labels[key] + " (" + t.name + ")" : t.name) : "";
+      const label = !t ? "" : key === "unknown" ? "Unknown" : ((et && et.labels[key]) ? et.labels[key] : t.name);
       rows.push([
         r.name, r.text, new Date(r.ts).toISOString(), q ? q.text : "", label,
         r.deletedAt ? "Deleted" : "Active",
@@ -772,15 +867,16 @@ class Component extends DCLogic {
 
     const liveResponses = sel && sq ? sel.responses.filter((r) => r.qid === sq.id && !r.deletedAt) : [];
     const grouping = !!st.grouping;
-    const et = effectiveThemes(liveResponses);
+    const et = effectiveThemes(liveResponses, sq ? sq.themes : null);
     const ordered = grouping
-      ? liveResponses.slice().sort((a, b) => THEMES.findIndex((t) => t.key === et.map.get(a.id)) - THEMES.findIndex((t) => t.key === et.map.get(b.id)))
+      ? liveResponses.slice().sort((a, b) => ALL_THEMES.findIndex((t) => t.key === et.map.get(a.id)) - ALL_THEMES.findIndex((t) => t.key === et.map.get(b.id)))
       : liveResponses;
     const gridW = st.gridW || 900;
     const colCount = Math.max(1, Math.floor((gridW + 14) / (250 + 14)));
     const colW = (gridW - 14 * (colCount - 1)) / colCount;
     const cpl = Math.max(10, (colW - 36) / 9.6);
     const cols = Array.from({ length: colCount }, () => ({ h: 0, items: [] }));
+    const focusKey = grouping && st.focusTheme && liveResponses.some((r) => et.map.get(r.id) === st.focusTheme) ? st.focusTheme : null;
     const responded = new Set(liveResponses.map((r) => r.name)).size;
     const partCount = sel ? Math.max(sel.participants.length, responded) : 0;
 
@@ -1001,14 +1097,15 @@ class Component extends DCLogic {
           dotStyle: "display: block; width: 10px; height: 10px; border-radius: 999px; background: " + (t ? t.dot : "#C8C6BE") + ";",
           openPicker: () => this.setState({ pickerFor: st.pickerFor === r.id ? null : r.id }),
           pickerOpen: grouping && st.pickerFor === r.id,
-          swatches: THEMES.map((th) => ({
-            label: (et.labels[th.key] ? et.labels[th.key] + " · " : "") + th.name,
-            pick: () => { this.setTheme(sel.id, r.id, th.key); this.setState({ pickerFor: null }); },
+          swatches: ALL_THEMES.map((th) => ({
+            label: th.key === "unknown" ? "Unknown" : (et.labels[th.key] || th.name),
+            pick: () => { this.freezeQuestion(sel, sq, et, null); this.setTheme(sel.id, r.id, th.key); this.setState({ pickerFor: null }); },
             style: "width: 16px; height: 16px; border-radius: 999px; border: 0; padding: 0; cursor: pointer; background: " + th.dot + ";" +
               (th.key === key ? " box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px " + th.dot + ";" : "")
           })),
           cardStyle: "position: relative; border-radius: 16px; padding: 14px 18px; display: flex; flex-direction: column; gap: 5px; background: " +
-            (t ? t.bg : "#F0EFEB") + "; transition: background-color .4s ease;" +
+            (t ? t.bg : "#F0EFEB") + "; transition: background-color .4s ease, opacity .2s ease, box-shadow .2s ease;" +
+            (focusKey ? (focusKey === key ? " box-shadow: 0 0 0 2px " + (t ? t.dot : "#9A988F") + ";" : " opacity: .28;") : "") +
             (fresh ? " animation: pop .35s ease both, fresh 5s ease-out;" : "")
         };
         const lines = Math.max(1, Math.ceil(r.text.length / cpl));
@@ -1027,13 +1124,46 @@ class Component extends DCLogic {
         });
         this._ro.observe(el);
       },
-      toggleGrouping: () => this.setState({ grouping: !st.grouping, pickerFor: null }),
+      groupingOn: grouping,
+      toggleGrouping: () => this.setState({ grouping: !st.grouping, pickerFor: null, focusTheme: null }),
       groupingTrackStyle: "position: relative; width: 30px; height: 18px; border-radius: 999px; transition: background .2s; background: " + (grouping ? accent : "#D5D3CC") + ";",
       groupingKnobStyle: "position: absolute; top: 2px; left: " + (grouping ? "14px" : "2px") + "; width: 14px; height: 14px; border-radius: 999px; background: #fff; transition: left .2s; box-shadow: 0 1px 2px rgba(0,0,0,.2);",
-      themeLegend: grouping ? THEMES.map((th) => {
+      themeLegend: grouping ? ALL_THEMES.map((th) => {
         const n = liveResponses.filter((r) => et.map.get(r.id) === th.key).length;
-        return n ? { label: et.labels[th.key] || th.name, count: n, dotStyle: "display: block; width: 9px; height: 9px; border-radius: 999px; background: " + th.dot + ";" } : null;
+        const savedT = sq && sq.themes && sq.themes.some((x) => x.key === th.key);
+        if (!n && !savedT) return null;
+        const editing = st.editTheme === th.key;
+        const commit = () => {
+          const v = String(this.state.themeDraft || "").trim();
+          this.setState({ editTheme: null });
+          if (v && v !== (et.labels[th.key] || th.name)) this.freezeQuestion(sel, sq, et, { key: th.key, label: v });
+        };
+        return {
+          label: th.key === "unknown" ? "Unknown" : (et.labels[th.key] || th.name),
+          count: n,
+          dotStyle: "display: block; width: 9px; height: 9px; border-radius: 999px; background: " + th.dot + ";",
+          editing,
+          notEditing: !editing,
+          canRename: th.key !== "unknown",
+          toggleFocus: () => this.setState({ focusTheme: focusKey === th.key ? null : th.key }),
+          focusTitle: focusKey === th.key ? "Show all answers" : "Highlight these answers",
+          chipStyle: "display: flex; align-items: center; gap: 2px; font-size: 13px; border-radius: 999px; padding: 3px 4px 3px 10px; transition: background .15s, color .15s; " +
+            (focusKey === th.key ? "background: " + th.bg + "; color: #14141A; box-shadow: inset 0 0 0 1px " + th.dot + ";" : "color: #6B6A64;") +
+            (focusKey && focusKey !== th.key ? " opacity: .55;" : ""),
+          draft: st.themeDraft || "",
+          setDraft: (e) => this.setState({ themeDraft: e.target.value.slice(0, 32) }),
+          startEdit: () => { if (th.key !== "unknown") this.setState({ editTheme: th.key, themeDraft: et.labels[th.key] || th.name }); },
+          keyDown: (e) => { if (e.key === "Enter") { e.preventDefault(); commit(); } else if (e.key === "Escape") this.setState({ editTheme: null }); },
+          commit
+        };
       }).filter(Boolean) : [],
+      rerunThemes: () => {
+        if (!sel || !sq) return;
+        const hasEdits = (sq.themes && sq.themes.length) || liveResponses.some((r) => r.theme);
+        const run = () => this.rerunQuestion(sel, sq);
+        if (hasEdits) this.ask("Re-run sentiment analysis?", "Your renamed themes and manual colour changes for this question will be replaced with a fresh grouping.", "Re-run", run);
+        else run();
+      },
       presentEmpty: liveResponses.length === 0,
       questionPosition: sel && sel.questions.length
         ? "Question " + (Math.min(Math.max(sel.activeIndex || 0, 0), sel.questions.length - 1) + 1) + " of " + sel.questions.length
