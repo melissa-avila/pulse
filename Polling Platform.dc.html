@@ -88,7 +88,12 @@
       <div style="display: flex; flex-direction: column; gap: 12px;">
         <div style="display: flex; align-items: baseline; justify-content: space-between;">
           <div style="font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: #6B6A64;">Sessions</div>
-          <button onClick="{{ newSession }}" style="background: #14141A; color: #F6F5F2; border: 0; border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer;" style-hover="background: #2C4A7C;">New session</button>
+          <sc-if value="{{ notMod }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ newSession }}" style="background: #14141A; color: #F6F5F2; border: 0; border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer;" style-hover="background: #2C4A7C;">New session</button>
+          </sc-if>
+          <sc-if value="{{ isMod }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size: 12px; font-weight: 600; color: #2C4A7C; background: #E9EEF7; border-radius: 999px; padding: 5px 10px;">Shared moderator link</div>
+          </sc-if>
         </div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <sc-for list="{{ sessionCards }}" as="s" hint-placeholder-count="3">
@@ -117,7 +122,12 @@
               <button onClick="{{ toggleMenu }}" title="More actions" style="background: transparent; border: 1px solid #DAD7CF; border-radius: 999px; width: 40px; height: 40px; cursor: pointer; color: #6B6A64; font-size: 18px; line-height: 1;" style-hover="border-color: #14141A; color: #14141A;">⋯</button>
               <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
                 <div style="position: absolute; top: 48px; right: 0; z-index: 20; background: #fff; border: 1px solid #DAD7CF; border-radius: 12px; box-shadow: 0 12px 28px rgba(20,20,26,.14); padding: 6px; min-width: 190px; display: flex; flex-direction: column;">
-                  <button onClick="{{ askDelete }}" style="text-align: left; background: transparent; border: 0; border-radius: 8px; padding: 10px 12px; font-size: 14px; font-weight: 600; color: #C0392B; cursor: pointer;" style-hover="background: #FBEDEB;">Delete session</button>
+                  <sc-if value="{{ notMod }}" hint-placeholder-val="{{ true }}">
+                    <button onClick="{{ askDelete }}" style="text-align: left; background: transparent; border: 0; border-radius: 8px; padding: 10px 12px; font-size: 14px; font-weight: 600; color: #C0392B; cursor: pointer;" style-hover="background: #FBEDEB;">Delete session</button>
+                  </sc-if>
+                  <sc-if value="{{ isMod }}" hint-placeholder-val="{{ false }}">
+                    <div style="padding: 10px 12px; font-size: 13px; color: #9A988F;">Only the session owner can delete it.</div>
+                  </sc-if>
                 </div>
               </sc-if>
             </div>
@@ -166,6 +176,19 @@
               <input value="{{ ytUrlDraft }}" onChange="{{ setYtUrl }}" placeholder="Paste a YouTube video or playlist link" style="border: 1px solid #DAD7CF; border-radius: 10px; padding: 10px 12px; font-size: 14px; background: #F6F5F2;" />
               <div style="{{ ytHelpStyle }}">{{ ytHelp }}</div>
             </div>
+          </div>
+
+          <div style="background: #fff; border: 1px solid #DAD7CF; border-radius: 14px; padding: 6px 16px; display: flex; flex-direction: column;">
+            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #6B6A64; padding: 12px 0 2px;">Share</div>
+            <sc-for list="{{ shareRows }}" as="sh" hint-placeholder-count="2">
+              <div style="{{ sh.rowStyle }}">
+                <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 2px;">
+                  <div style="font-size: 14px; font-weight: 600;">{{ sh.title }}</div>
+                  <div style="font-size: 13px; color: #6B6A64; line-height: 1.4;">{{ sh.desc }}</div>
+                </div>
+                <button onClick="{{ sh.copy }}" style="{{ sh.btnStyle }}">{{ sh.btnLabel }}</button>
+              </div>
+            </sc-for>
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 10px;">
@@ -547,7 +570,7 @@
   </sc-if>
 
   <sc-if value="{{ isPhone }}" hint-placeholder-val="{{ false }}">
-    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 0 0 40px;">
+    <div style="{{ phoneOuterStyle }}">
       <sc-if value="{{ showChrome }}" hint-placeholder-val="{{ true }}">
         <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #6B6A64; padding-top: 24px;">
           <span>Simulated scan of code</span>
@@ -555,8 +578,8 @@
         </div>
       </sc-if>
 
-      <div style="width: 100%; max-width: 480px; flex: 1; display: flex;">
-        <div style="background: #F6F5F2; flex: 1; display: flex; flex-direction: column; min-height: 78vh;">
+      <div style="{{ phoneFrameStyle }}">
+        <div style="{{ phoneCardStyle }}">
 
           <sc-if value="{{ phoneLoading }}" hint-placeholder-val="{{ false }}">
             <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 32px; color: #9A988F; font-size: 15px;">Connecting…</div>
@@ -573,7 +596,7 @@
           <sc-if value="{{ needsCode }}" hint-placeholder-val="{{ false }}">
             <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 18px; padding: 32px 26px;">
               <div style="font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #9A988F;">Pulse</div>
-              <div style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2;">Enter the code on screen</div>
+              <div style="font-size: clamp(24px, 2.2vw, 34px); font-weight: 600; letter-spacing: -0.02em; line-height: 1.2;">Enter the code on screen</div>
               <input value="{{ codeDraft }}" onChange="{{ setCodeDraft }}" onKeyDown="{{ codeKeyDown }}" inputMode="numeric" autoComplete="off" placeholder="1234 5678" style="border: 1px solid #DAD7CF; border-radius: 12px; padding: 14px 16px; font-size: 22px; letter-spacing: .08em; font-variant-numeric: tabular-nums; background: #fff;" />
               <sc-if value="{{ hasCodeError }}" hint-placeholder-val="{{ false }}">
                 <div style="font-size: 14px; color: #C0392B;">{{ codeError }}</div>
@@ -593,9 +616,9 @@
           <sc-if value="{{ needsName }}" hint-placeholder-val="{{ true }}">
             <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 18px; padding: 32px 26px;">
               <div style="font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #9A988F;">{{ phoneSessionName }}</div>
-              <div style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2;">What's your first name?</div>
+              <div style="font-size: clamp(24px, 2.2vw, 34px); font-weight: 600; letter-spacing: -0.02em; line-height: 1.2;">What's your first name?</div>
               <div style="font-size: 15px; color: #6B6A64; line-height: 1.5;">Your name is saved with your answers so the team can follow up.</div>
-              <input value="{{ nameDraft }}" onChange="{{ setNameDraft }}" placeholder="First name" style="border: 1px solid #DAD7CF; border-radius: 12px; padding: 14px 16px; font-size: 17px; background: #fff;" />
+              <input value="{{ nameDraft }}" onChange="{{ setNameDraft }}" onKeyDown="{{ nameKeyDown }}" placeholder="First name" style="border: 1px solid #DAD7CF; border-radius: 12px; padding: 14px 16px; font-size: 17px; background: #fff;" />
               <button onClick="{{ joinSession }}" style="{{ joinBtnStyle }}">Join session</button>
             </div>
           </sc-if>
@@ -606,8 +629,8 @@
                 <span>{{ phoneName }}</span>
                 <span>{{ phonePosition }}</span>
               </div>
-              <div style="font-size: 24px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.25; text-wrap: pretty;">{{ activeQuestionText }}</div>
-              <textarea value="{{ answerDraft }}" onChange="{{ setAnswerDraft }}" maxLength="250" placeholder="Type your answer…" style="border: 1px solid #DAD7CF; border-radius: 14px; padding: 14px 16px; font-size: 17px; line-height: 1.4; min-height: 150px; background: #fff;"></textarea>
+              <div style="font-size: clamp(22px, 2.4vw, 38px); font-weight: 600; letter-spacing: -0.02em; line-height: 1.22; text-wrap: pretty;">{{ activeQuestionText }}</div>
+              <textarea value="{{ answerDraft }}" onChange="{{ setAnswerDraft }}" onKeyDown="{{ answerKeyDown }}" maxLength="250" placeholder="Type your answer…" style="border: 1px solid #DAD7CF; border-radius: 14px; padding: 14px 16px; font-size: 17px; line-height: 1.4; min-height: 150px; background: #fff;"></textarea>
               <div style="font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; color: {{ answerCounterColor }};">{{ answerRemaining }}</div>
               <button onClick="{{ submitAnswer }}" style="{{ submitStyle }}">Submit</button>
               <sc-if value="{{ hasMine }}" hint-placeholder-val="{{ false }}">
@@ -1286,6 +1309,9 @@ class Component extends DCLogic {
     }, 250);
     const m = /[#?&]join(?:=(\d*))?/.exec(window.location.hash + window.location.search);
     const scanned = m ? (m[1] || "") : null; // "" = arrived via short link, needs code
+    const modM = /[#&]mod=([\w-]+)/.exec(window.location.hash);
+    const modId = modM ? modM[1] : null;
+    if (modId) this.setState({ modId });
 
     if (sbConfig()) {
       this.setState({ scanCode: scanned || "", view: scanned !== null ? "phone" : "admin", remote: true, kiosk: scanned !== null });
@@ -1302,7 +1328,7 @@ class Component extends DCLogic {
         this.setState({
           sessions,
           loaded: true,
-          selectedId: sessions[0] ? sessions[0].id : null,
+          selectedId: modId && sessions.some((s) => s.id === modId) ? modId : (sessions[0] ? sessions[0].id : null),
           scanCode: scanned !== null ? scanned : (sessions[0] ? sessions[0].code : "")
         });
       }).catch((e) => this.setState({ backendError: String(e.message || e), loaded: true }));
@@ -1317,7 +1343,7 @@ class Component extends DCLogic {
     const first = sessions[0];
     this.setState({
       sessions,
-      selectedId: first.id,
+      selectedId: modId && sessions.some((s) => s.id === modId) ? modId : first.id,
       scanCode: scanned !== null ? scanned : first.code,
       view: scanned !== null ? "phone" : "admin",
       kiosk: scanned !== null,
@@ -1469,6 +1495,32 @@ class Component extends DCLogic {
     });
   }
 
+  shareUrl(frag) {
+    const loc = window.location;
+    let extra = "";
+    const rt = !fileSb() && runtimeSb();
+    if (rt) {
+      const mm = /^https:\/\/([a-z0-9]+)\.supabase\.co\/?$/.exec(rt.url);
+      extra = "&sb=" + encodeURIComponent((mm ? mm[1] : rt.url) + "~" + rt.anonKey);
+    }
+    const path = /\.github\.io$/.test(loc.hostname) ? loc.pathname.replace(/[^/]*$/, "") : loc.pathname;
+    return loc.origin + path + "#" + frag + extra;
+  }
+
+  copyText(key, text) {
+    const done = () => { this.setState({ copied: key }); clearTimeout(this._copyT); this._copyT = setTimeout(() => this.setState({ copied: null }), 2000); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => { this.fallbackCopy(text); done(); });
+    else { this.fallbackCopy(text); done(); }
+  }
+
+  fallbackCopy(text) {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
   joinUrlFor(code) {
     const loc = window.location;
     if (loc.protocol === "http:" || loc.protocol === "https:") {
@@ -1533,26 +1585,24 @@ class Component extends DCLogic {
     const s = this.selected();
     if (!s) return;
     const esc = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
-    const rows = [["Name", "Answer", "Timestamp", "Question", "Theme", "Starred", "Note", "Status", "Deleted by", "Deleted at", "Question notes"]];
-    const byQ = {};
-    s.questions.forEach((q) => { byQ[q.id] = effectiveThemes(s.responses.filter((r) => r.qid === q.id), q.themes); });
-    s.responses.forEach((r) => {
-      const q = s.questions.find((x) => x.id === r.qid);
-      const et = byQ[r.qid];
+    const rows = [["Type", "Name", "Answer", "Timestamp", "Question", "Theme", "Starred", "Note", "Status", "Deleted by", "Deleted at"]];
+    const answerRow = (r, q, et) => {
       const key = r.deletedAt ? r.theme : (et ? et.map.get(r.id) : r.theme);
       const t = themeByKey(key);
       const label = !t ? "" : key === "unknown" ? "Unknown" : ((et && et.labels[key]) ? et.labels[key] : t.name);
-      rows.push([
-        r.name, r.text, new Date(r.ts).toISOString(), q ? q.text : "", label, r.starred ? "Yes" : "", r.note || "",
+      return [
+        "Answer", r.name, r.text, new Date(r.ts).toISOString(), q ? q.text : "", label, r.starred ? "Yes" : "", r.note || "",
         r.deletedAt ? "Deleted" : "Active",
         r.deletedAt ? (r.deletedBy || "presenter") : "",
-        r.deletedAt ? new Date(r.deletedAt).toISOString() : "",
-        q && q.notes ? q.notes : ""
-      ]);
-    });
+        r.deletedAt ? new Date(r.deletedAt).toISOString() : ""
+      ];
+    };
     s.questions.forEach((q) => {
-      if (q.notes && !s.responses.some((r) => r.qid === q.id)) rows.push(["", "", "", q.text, "", "", "", "", "", "", q.notes]);
+      const et = effectiveThemes(s.responses.filter((r) => r.qid === q.id), q.themes);
+      if (q.notes && q.notes.trim()) rows.push(["Question notes", "", "", "", q.text, "", "", q.notes, "", "", ""]);
+      s.responses.filter((r) => r.qid === q.id).forEach((r) => rows.push(answerRow(r, q, et)));
     });
+    s.responses.filter((r) => !s.questions.some((q) => q.id === r.qid)).forEach((r) => rows.push(answerRow(r, null, null)));
     const csv = rows.map((r) => r.map(esc).join(",")).join("\r\n");
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
@@ -1562,6 +1612,13 @@ class Component extends DCLogic {
   };
 
   renderVals() {
+    const v = this._vals();
+    this._submitAnswer = v.submitAnswer;
+    this._joinSession = v.joinSession;
+    return v;
+  }
+
+  _vals() {
     const st = this.state;
     const sel = this.selected();
     const liveSess = st.liveId ? (st.sessions.find((s) => s.id === st.liveId && (s.activeIndex || 0) >= 0) || null) : null;
@@ -1643,6 +1700,24 @@ class Component extends DCLogic {
         ? "Supabase error — " + st.backendError.slice(0, 80)
         : (sbConfig() ? "live · synced via Supabase" : "local only · data stays in this browser"),
       showChrome: !st.kiosk,
+      isMod: !!st.modId,
+      notMod: !st.modId,
+      shareRows: sel ? [
+        { key: "mod", title: "Moderator link", desc: "Opens this session's admin and presenter views. Anyone with the link can moderate, star, delete and export answers.", url: this.shareUrl("mod=" + sel.id) },
+        { key: "join", title: "Participant link", desc: "For people joining from a laptop or desktop. Same as scanning the QR code, and it changes when you rotate the code.", url: this.shareUrl("join=" + sel.code) }
+      ].map((x, i) => ({
+        title: x.title, desc: x.desc,
+        copy: () => this.copyText(x.key, x.url),
+        btnLabel: st.copied === x.key ? "Copied" : "Copy link",
+        btnStyle: "flex: none; border-radius: 999px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; border: 1px solid " +
+          (st.copied === x.key ? "#6E9A6E; background: #DDEBDD; color: #2F5A2F;" : "#14141A; background: transparent; color: #14141A;"),
+        rowStyle: "display: flex; align-items: center; gap: 16px; padding: 12px 0; flex-wrap: wrap;" + (i === 0 ? " border-bottom: 1px solid #EDEBE6;" : "")
+      })) : [],
+      phoneOuterStyle: "flex: 1; display: flex; flex-direction: column; align-items: center; gap: 18px; " +
+        (vw >= 760 ? "padding: 48px 24px 64px; background: #E9E7E1;" : "padding: 0 0 40px;"),
+      phoneFrameStyle: "width: 100%; flex: 1; display: flex; max-width: " + (vw >= 760 ? "680px" : "480px") + ";",
+      phoneCardStyle: "background: #F6F5F2; flex: 1; display: flex; flex-direction: column; " +
+        (vw >= 760 ? "min-height: 540px; border-radius: 24px; border: 1px solid #DAD7CF; box-shadow: 0 18px 50px rgba(20,20,26,.08); padding: 12px 20px;" : "min-height: 78vh;"),
       adminCols: vw < 860 ? "minmax(0, 1fr)" : "minmax(240px, 300px) minmax(0, 1fr)",
       presentCols: vw < 900 ? "minmax(0, 1fr)" : "minmax(0, 1fr) clamp(260px, 22vw, 380px)",
       ...(() => {
@@ -1881,7 +1956,7 @@ class Component extends DCLogic {
       tabPresentStyle: tab(st.view === "present"),
       tabPhoneStyle: tab(st.view === "phone"),
 
-      sessionCards: st.sessions.map((s) => ({
+      sessionCards: st.sessions.filter((s) => !st.modId || s.id === st.modId).map((s) => ({
         name: s.name,
         code: fmtCode(s.code),
         meta: s.questions.length + " q · " + s.responses.filter((r) => !r.deletedAt).length + " answers",
@@ -2209,6 +2284,10 @@ class Component extends DCLogic {
         ? "Question " + (Math.min(Math.max(phoneSess.activeIndex || 0, 0), phoneSess.questions.length - 1) + 1) + " of " + phoneSess.questions.length
         : "",
       answerDraft: st.answerDraft,
+      answerKeyDown: (e) => {
+        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); const b = document.activeElement; if (b) b.blur(); this._submitAnswer && this._submitAnswer(); }
+      },
+      nameKeyDown: (e) => { if (e.key === "Enter") { e.preventDefault(); this._joinSession && this._joinSession(); } },
       setAnswerDraft: (e) => this.setState({ answerDraft: e.target.value.slice(0, MAX_ANSWER) }),
       submitStyle: "border: 0; border-radius: 999px; padding: 15px 20px; font-size: 16px; font-weight: 600; background: " +
         (st.answerDraft.trim() ? accent : "#DAD7CF") + "; color: " + (st.answerDraft.trim() ? "#fff" : "#9A988F") +
