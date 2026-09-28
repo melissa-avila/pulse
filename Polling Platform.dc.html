@@ -1970,7 +1970,7 @@ class Component extends DCLogic {
       presentMounted: !st.kiosk && authed && (st.view === "present" || (!!liveSess && st.music.on && st.music.track === "youtube")),
       presentWrapStyle: (st.view === "present" ? "display: flex;" : "display: none;") +
         " flex: 1; background: #fff; flex-direction: column; padding: clamp(12px, 1.6vw, 28px) clamp(14px, 2vw, 40px) clamp(12px, 1.2vw, 20px); " +
-        (vw >= 900 ? "height: calc(100vh - 54px); overflow: hidden;" : "min-height: calc(100vh - 54px);"),
+        (vw >= 900 ? "flex: none; height: calc(100vh - 54px); min-height: 0; overflow: hidden;" : "min-height: calc(100vh - 54px);"),
       presentGridStyle: "flex: 1; min-height: 0; display: grid; grid-template-columns: " + (vw < 900 ? "minmax(0, 1fr)" : "minmax(0, 1fr) clamp(260px, 22vw, 380px)") +
         "; gap: clamp(20px, 2.6vw, 48px); padding: clamp(16px, 2.4vw, 44px) 0 0; " + (vw >= 900 ? "grid-template-rows: minmax(0, 1fr); align-items: stretch;" : "align-items: start;"),
       presentLeftStyle: "display: flex; flex-direction: column; gap: clamp(16px, 2vw, 32px); min-width: 0;" + (vw >= 900 ? " min-height: 0;" : ""),
