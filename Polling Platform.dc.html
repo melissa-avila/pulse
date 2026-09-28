@@ -953,6 +953,23 @@ function htmlToMd(root) {
   };
   return block(root).replace(/\n{3,}/g, "\n\n").replace(/^\s+|\s+$/g, "");
 }
+const b64u = (u8) => btoa(String.fromCharCode(...u8)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const unb64u = (s) => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), (c) => c.charCodeAt(0));
+async function linkKey(token) {
+  const raw = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("pulse-admin-key:" + token));
+  return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
+}
+async function linkId(token) { return (await sha256("pulse-admin-id:" + token)).slice(0, 20); }
+async function sealPass(pass) {
+  const token = b64u(crypto.getRandomValues(new Uint8Array(24)));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await linkKey(token), new TextEncoder().encode(pass)));
+  return { token, rec: { id: await linkId(token), iv: b64u(iv), ct: b64u(ct), at: Date.now() } };
+}
+async function openPass(token, rec) {
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64u(rec.iv) }, await linkKey(token), unb64u(rec.ct));
+  return new TextDecoder().decode(pt);
+}
 async function sha256(s) {
   const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(s)));
   return Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join("");
@@ -1453,6 +1470,7 @@ class Component extends DCLogic {
   componentDidUpdate() {
     this.drawQr();
     if (this.state.auth === "mod-pending") this.resolveMod();
+    if (this.state.auth === "admin-pending") this.resolveAdminLink();
     const sel = this.selected();
     const st0 = this.state;
     const live = st0.liveId ? st0.sessions.find((s) => s.id === st0.liveId && (s.activeIndex || 0) >= 0) : null;
@@ -1599,17 +1617,49 @@ class Component extends DCLogic {
       this.setState({ auth: "locked", passError: "The admin passcode isn't set up on this site yet, so admin is locked. Add the ADMIN_PASSCODE secret and redeploy." });
       return;
     }
-    const pm = /[#&]admin=([^&]+)/.exec(window.location.hash);
-    if (pm) {
-      const pass = decodeURIComponent(pm[1]);
+    const am = /[#&]adm=([\w-]+)/.exec(window.location.hash);
+    if (am) {
+      this._admReq = am[1];
       try { history.replaceState(null, "", window.location.pathname + window.location.search); } catch (e) {}
-      if ((await sha256(pass)) === h) { try { localStorage.setItem(ADMIN_KEY, pass); } catch (e) {} this.setState({ auth: "owner" }); return; }
     }
     let stored = null;
     try { stored = localStorage.getItem(ADMIN_KEY); } catch (e) {}
-    if (stored && (await sha256(stored)) === h) { this.setState({ auth: "owner" }); return; }
+    if (stored && (await sha256(stored)) === h) { this._admReq = null; this.setState({ auth: "owner" }); return; }
+    if (this._admReq) { this.setState({ auth: "admin-pending" }); this.resolveAdminLink(); return; }
     if (this._modReq) { this.setState({ auth: "mod-pending" }); this.resolveMod(); return; }
     this.setState({ auth: "locked" });
+  }
+
+  async resolveAdminLink() {
+    const token = this._admReq;
+    if (!token || this.state.auth !== "admin-pending" || !this.state.loaded || this._admBusy) return;
+    this._admBusy = true;
+    try {
+      const id = await linkId(token);
+      let rec = null;
+      for (const s of this.state.sessions) { const hit = ((s.settings && s.settings.adminLinks) || []).find((x) => x.id === id); if (hit) { rec = hit; break; } }
+      const pass = rec ? await openPass(token, rec).catch(() => null) : null;
+      this._admReq = null;
+      if (pass && (await sha256(pass)) === adminHash()) {
+        try { localStorage.setItem(ADMIN_KEY, pass); } catch (e) {}
+        this.setState({ auth: "owner", passError: "" });
+      } else if (this._modReq) { this.setState({ auth: "mod-pending" }); this.resolveMod(); }
+      else this.setState({ auth: "locked", passError: "That admin link is no longer valid. Enter the passcode instead." });
+    } finally { this._admBusy = false; }
+  }
+
+  async makeAdminLink(sel) {
+    let pass = null;
+    try { pass = localStorage.getItem(ADMIN_KEY); } catch (e) {}
+    if (!pass || !sel) return "";
+    const { token, rec } = await sealPass(pass);
+    const prev = ((sel.settings && sel.settings.adminLinks) || []).slice(-4);
+    this.updateSettings(sel.id, { adminLinks: prev.concat([rec]) });
+    return this.shareUrl("adm=" + token);
+  }
+
+  revokeAdminLinks() {
+    this.state.sessions.forEach((s) => { if (s.settings && s.settings.adminLinks && s.settings.adminLinks.length) this.updateSettings(s.id, { adminLinks: [] }); });
   }
 
   resolveMod() {
@@ -1848,10 +1898,10 @@ class Component extends DCLogic {
         ];
         let pass = null;
         try { pass = localStorage.getItem(ADMIN_KEY); } catch (e) {}
-        if (!st.modId && adminHash() && pass) rows.push({ key: "admin", title: "Admin link", desc: "Opens your full admin on another device without the passcode. Don't share it.", url: () => this.shareUrl("admin=" + encodeURIComponent(pass)) });
+        if (!st.modId && adminHash() && pass) rows.push({ key: "admin", title: "Admin link", desc: "Full admin on another device. The passcode is encrypted, never in the link. Each copy makes a new link; don't share it.", url: () => this.makeAdminLink(sel) });
         return rows.map((x, i) => ({
           title: x.title, desc: x.desc,
-          copy: () => this.copyText(x.key, x.url()),
+          copy: () => Promise.resolve(x.url()).then((u) => u && this.copyText(x.key, u)),
           btnLabel: st.copied === x.key ? "Copied" : "Copy link",
           btnStyle: "flex: none; border-radius: 999px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; border: 1px solid " +
             (st.copied === x.key ? "#6E9A6E; background: #DDEBDD; color: #2F5A2F;" : "#14141A; background: transparent; color: #14141A;"),
@@ -2010,7 +2060,7 @@ class Component extends DCLogic {
       },
       isAdmin: st.view === "admin" && !st.kiosk && authed,
       isLocked: !st.kiosk && st.auth === "locked",
-      isChecking: !st.kiosk && (!st.auth || st.auth === "mod-pending"),
+      isChecking: !st.kiosk && (!st.auth || st.auth === "mod-pending" || st.auth === "admin-pending"),
       passDraft: st.passDraft || "",
       setPassDraft: (e) => this.setState({ passDraft: e.target.value, passError: "" }),
       passKeyDown: (e) => { if (e.key === "Enter") { e.preventDefault(); this.tryUnlock(); } },
