@@ -161,7 +161,7 @@
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.7-4"></path><path d="M13.5 2.5v3h-3"></path></svg>
                 </button>
               </div>
-              <div style="font-size: 12px; color: #9A988F; line-height: 1.4;">Rotating replaces the code and QR right away. People who already joined aren't affected.</div>
+              <div style="font-size: 12px; color: #9A988F; line-height: 1.4;">Rotating replaces the code and QR. Anyone who already joined is disconnected and has to scan the new code.</div>
             </div>
             <div style="flex: 1 1 300px; min-width: 260px; display: flex; flex-direction: column;">
               <div style="font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #6B6A64; padding-bottom: 2px;">Share</div>
@@ -204,8 +204,6 @@
           <div style="display: flex; flex-direction: column; gap: 10px;">
             <div style="display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap;">
               <div style="font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #6B6A64;">Questions</div>
-              <div style="font-size: 13px; color: #6B6A64;"><span style="font-weight: 700; color: #14141A; font-variant-numeric: tabular-nums;">{{ selResponseCount }}</span> answers from <span style="font-weight: 700; color: #14141A; font-variant-numeric: tabular-nums;">{{ selParticipantCount }}</span> participants</div>
-              <button onClick="{{ askClear }}" style="background: transparent; border: 0; padding: 2px 0; font-size: 13px; cursor: pointer; color: #9A988F; text-decoration: underline; text-underline-offset: 2px;" style-hover="color: #C0392B;">Clear answers</button>
               <div style="flex: 1;"></div>
               <button onClick="{{ addQuestion }}" style="background: #EDEBE6; border: 1px solid #DAD7CF; border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer;" style-hover="background: #14141A; color: #F6F5F2;">Add question</button>
             </div>
@@ -224,8 +222,11 @@
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 10px;">
-            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap;">
               <div style="font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #6B6A64;">Answers</div>
+              <div style="font-size: 13px; color: #6B6A64;"><span style="font-weight: 700; color: #14141A; font-variant-numeric: tabular-nums;">{{ selResponseCount }}</span> answers from <span style="font-weight: 700; color: #14141A; font-variant-numeric: tabular-nums;">{{ selParticipantCount }}</span> participants</div>
+              <button onClick="{{ askClear }}" style="background: transparent; border: 0; padding: 2px 0; font-size: 13px; cursor: pointer; color: #9A988F; text-decoration: underline; text-underline-offset: 2px;" style-hover="color: #C0392B;">Clear answers</button>
+              <div style="flex: 1;"></div>
               <button onClick="{{ exportCsv }}" style="background: transparent; border: 1px solid #14141A; border-radius: 999px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;" style-hover="background: #14141A; color: #F6F5F2;">Export CSV</button>
             </div>
             <sc-if value="{{ hasAnswers }}" hint-placeholder-val="{{ true }}">
@@ -275,16 +276,16 @@
           <span style="color: #3C3B35; white-space: nowrap;">Scan the QR code to join</span>
         </div>
         <div style="flex: 1;"></div>
-        <div style="font-size: 15px; font-weight: 600; color: #9A988F;">{{ selName }}</div>
+        <div style="font-size: 15px; font-weight: 600; color: {{ bgFaint }};">{{ selName }}</div>
       </div>
 
       <div style="{{ presentGridStyle }}">
 
         <div style="{{ presentLeftStyle }}">
-          <div style="font-family: 'Sofia Pro', 'SofiaPro', Inter, system-ui, sans-serif; font-size: clamp(30px, 3.6vw, 72px); font-weight: 600; line-height: 1.12; letter-spacing: -0.025em; text-wrap: pretty;">{{ activeQuestionText }}</div>
+          <div style="font-family: 'Sofia Pro', 'SofiaPro', Inter, system-ui, sans-serif; font-size: clamp(30px, 3.6vw, 72px); font-weight: 600; line-height: 1.12; letter-spacing: -0.025em; text-wrap: pretty; color: {{ bgInk }};">{{ activeQuestionText }}</div>
           <div style="{{ presentAnswersBoxStyle }}">
             <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; min-height: 28px; flex: none;">
-              <button onClick="{{ toggleGrouping }}" style="display: flex; align-items: center; gap: 8px; background: transparent; border: 0; padding: 2px 0; cursor: pointer; font-size: 13px; font-weight: 600; color: #6B6A64;">
+              <button onClick="{{ toggleGrouping }}" style="{{ groupBtnStyle }}">
                 <span style="{{ groupingTrackStyle }}"><span style="{{ groupingKnobStyle }}"></span></span>
                 Group themes
               </button>
@@ -311,11 +312,11 @@
               <sc-if value="{{ groupingOn }}" hint-placeholder-val="{{ false }}">
                 <div style="flex: 1;"></div>
                 <sc-if value="{{ canAddTheme }}" hint-placeholder-val="{{ false }}">
-                  <button onClick="{{ addTheme }}" style="background: transparent; border: 1px dashed #C8C6BE; border-radius: 999px; padding: 4px 11px; font-size: 12px; font-weight: 600; color: #6B6A64; cursor: pointer; white-space: nowrap;" style-hover="border-color: #14141A; color: #14141A;">+ Add theme</button>
+                  <button onClick="{{ addTheme }}" style="{{ addThemeStyle }}">+ Add theme</button>
                 </sc-if>
-                <button onClick="{{ rerunThemes }}" style="background: transparent; border: 1px solid #DAD7CF; border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 600; color: #6B6A64; cursor: pointer; white-space: nowrap;" style-hover="border-color: #14141A; color: #14141A;">Re-generate themes</button>
+                <button onClick="{{ rerunThemes }}" style="{{ regenStyle }}">Re-generate themes</button>
               </sc-if>
-              <button onClick="{{ openQNotes }}" data-note-btn="1" style="{{ qNotesBtnStyle }}" style-hover="border-color: #14141A; color: #14141A;">
+              <button onClick="{{ openQNotes }}" data-note-btn="1" style="{{ qNotesBtnStyle }}">
                 <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M3.5 2h6.5l2.5 2.5V14h-9z"></path><path d="M6 7h4M6 9.5h4" stroke-linecap="round"></path></svg>
                 {{ qNotesLabel }}
               </button>
@@ -357,7 +358,7 @@
             </div>
           </div>
           <sc-if value="{{ presentEmpty }}" hint-placeholder-val="{{ false }}">
-            <div style="font-size: 18px; color: #B4B2AA;">Waiting for the first answer…</div>
+            <div style="font-size: 18px; color: {{ bgFaint }};">Waiting for the first answer…</div>
           </sc-if>
         </div>
 
@@ -482,7 +483,7 @@
         </div>
       </div>
 
-      <div style="padding-top: 14px; margin-top: 10px; border-top: 1px solid #EDEBE6; position: relative; flex: none;">
+      <div style="padding-top: 14px; margin-top: 10px; border-top: 1px solid {{ bgLine }}; position: relative; flex: none;">
         <sc-if value="{{ hasMentionList }}" hint-placeholder-val="{{ false }}">
           <div style="position: absolute; bottom: calc(100% - 18px); left: 12px; z-index: 10; min-width: 220px; background: #fff; border: 1px solid #DAD7CF; border-radius: 12px; box-shadow: 0 12px 28px rgba(20,20,26,.14); padding: 6px; display: flex; flex-direction: column;">
             <div style="font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #9A988F; padding: 6px 10px 4px;">Post on behalf of</div>
@@ -504,7 +505,7 @@
       <div style="display: flex; align-items: center; gap: 12px; padding-top: 12px; flex-wrap: wrap; flex: none;">
         <button onClick="{{ prevQuestion }}" style="{{ prevStyle }}">← Previous question</button>
         <div style="flex: 1;"></div>
-        <div style="font-size: 14px; color: #9A988F; font-variant-numeric: tabular-nums;">{{ questionPosition }}</div>
+        <div style="font-size: 14px; color: {{ bgMuted }}; font-variant-numeric: tabular-nums;">{{ questionPosition }}</div>
         <div style="flex: 1;"></div>
         <button onClick="{{ nextQuestion }}" style="{{ nextStyle }}">Next question →</button>
         <button onClick="{{ endPresentation }}" style="background: #F0EFEB; border: 0; border-radius: 999px; padding: 12px 22px; font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap; color: #C0392B;" style-hover="background: #E4E2DC;">End session</button>
@@ -1100,6 +1101,34 @@ function sbConfig() {
   return fileSb() || runtimeSb();
 }
 
+function hexRgb(h) {
+  h = (h || "").replace("#", "");
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  if (!/^[0-9a-f]{6}$/i.test(h)) return null;
+  return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
+}
+function mixRgb(a, b, t) { return "rgb(" + a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(",") + ")"; }
+function lum(rgb) {
+  const c = rgb.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+function bgTheme(set) {
+  const rgb = null;
+  if (!rgb) return { custom: false, bg: "#fff", ink: "#14141A", muted: "#6B6A64", faint: "#9A988F", line: "#EDEBE6", dark: false };
+  const grad = set.bgMode === "gradient";
+  const endHex = hexRgb(set.bgEnd) ? set.bgEnd : "#FFFFFF";
+  const end = hexRgb(endHex);
+  const samples = grad ? [0, 0.25, 0.5, 0.75, 1].map((t) => rgb.map((v, i) => v + (end[i] - v) * t)) : [rgb];
+  const Ls = samples.map(lum);
+  const cWhite = Math.min(...Ls.map((l) => 1.05 / (l + 0.05)));
+  const cDark = Math.min(...Ls.map((l) => (l + 0.05) / 0.0588));
+  const dark = cWhite > cDark;
+  const bg = grad ? "linear-gradient(180deg, " + set.bgColor + " 0%, " + endHex + " 55%, " + endHex + " 100%)" : set.bgColor;
+  return dark
+    ? { custom: true, bg, ink: "#FFFFFF", muted: "rgba(255,255,255,.86)", faint: "rgba(255,255,255,.72)", line: "rgba(255,255,255,.22)", dark: true }
+    : { custom: true, bg, ink: "#14141A", muted: "#34332E", faint: "#4A4943", line: "rgba(20,20,26,.14)", dark: false };
+}
+
 class Component extends DCLogic {
   state = {
     view: "admin",
@@ -1474,6 +1503,17 @@ class Component extends DCLogic {
         this.remoteWrite(this.sb("sessions?id=eq." + id, { method: "PATCH", prefer: "return=minimal", body: { settings: next.settings || {} } }));
       }
     }
+  }
+
+  confirmRotate() {
+    const cur = this.selected();
+    if (!cur) return;
+    const n = new Set(cur.responses.filter((r) => !r.deletedAt).map((r) => (r.name || "").toLowerCase())).size;
+    this.ask("Rotate the join code?",
+      "This replaces the code, QR code and participant link for \"" + cur.name + "\". Everyone who already joined" + (n ? " (" + n + " " + (n === 1 ? "person" : "people") + ")" : "") +
+        " is disconnected and has to scan the new QR code to keep answering. Answers already submitted are kept.",
+      "Rotate code",
+      () => { this.update(cur.id, (s) => ({ ...s, code: makeCode() })); this._qrDrawn = null; });
   }
 
   updateSettings(id, patch) { this.update(id, (s) => ({ ...s, settings: { ...(s.settings || {}), ...patch } })); }
@@ -1968,8 +2008,16 @@ class Component extends DCLogic {
       passError: st.passError || "",
       isPresent: st.view === "present" && !st.kiosk && authed,
       presentMounted: !st.kiosk && authed && (st.view === "present" || (!!liveSess && st.music.on && st.music.track === "youtube")),
+      ...(() => {
+        const bt = bgTheme(sel && sel.settings);
+        return { bgInk: bt.ink, bgMuted: bt.muted, bgFaint: bt.faint, bgLine: bt.line,
+          groupBtnStyle: "display: flex; align-items: center; gap: 8px; background: transparent; border: 0; padding: 2px 0; cursor: pointer; font-size: 13px; font-weight: 600; color: " + bt.muted + ";",
+          addThemeStyle: "background: transparent; border: 1px dashed " + (bt.custom ? bt.muted : "#C8C6BE") + "; border-radius: 999px; padding: 4px 11px; font-size: 12px; font-weight: 600; color: " + bt.muted + "; cursor: pointer; white-space: nowrap;",
+          regenStyle: "background: transparent; border: 1px solid " + (bt.custom ? bt.muted : "#DAD7CF") + "; border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 600; color: " + bt.muted + "; cursor: pointer; white-space: nowrap;",
+        };
+      })(),
       presentWrapStyle: (st.view === "present" ? "display: flex;" : "display: none;") +
-        " flex: 1; background: #fff; flex-direction: column; padding: clamp(12px, 1.6vw, 28px) clamp(14px, 2vw, 40px) clamp(12px, 1.2vw, 20px); " +
+        " flex: 1; background: " + bgTheme(sel && sel.settings).bg + "; color: " + bgTheme(sel && sel.settings).ink + "; flex-direction: column; padding: clamp(12px, 1.6vw, 28px) clamp(14px, 2vw, 40px) clamp(12px, 1.2vw, 20px); " +
         (vw >= 900 ? "flex: none; height: calc(100vh - 54px); min-height: 0; overflow: hidden;" : "min-height: calc(100vh - 54px);"),
       presentGridStyle: "flex: 1; min-height: 0; display: grid; grid-template-columns: " + (vw < 900 ? "minmax(0, 1fr)" : "minmax(0, 1fr) clamp(260px, 22vw, 380px)") +
         "; gap: clamp(20px, 2.6vw, 48px); padding: clamp(16px, 2.4vw, 44px) 0 0; " + (vw >= 900 ? "grid-template-rows: minmax(0, 1fr); align-items: stretch;" : "align-items: start;"),
@@ -2146,11 +2194,7 @@ class Component extends DCLogic {
           this.persist(this.state.sessions.map((s) => (s.id === sel.id ? { ...s, responses: [], participants: [] } : s)));
         }
       ),
-      rotateCode: () => {
-        const code = makeCode();
-        this.update(sel.id, (s) => ({ ...s, code }));
-        this._qrDrawn = null;
-      },
+      rotateCode: () => this.confirmRotate(),
       exportCsv: this.exportCsv,
 
       questionRows: sel ? sel.questions.map((q, i) => ({
@@ -2286,7 +2330,7 @@ class Component extends DCLogic {
           toggleFocus: () => this.setState({ focusTheme: focusKey === th.key ? null : th.key }),
           focusTitle: focusKey === th.key ? "Show all answers" : "Highlight these answers",
           chipStyle: "display: flex; align-items: center; gap: 2px; font-size: 13px; border-radius: 999px; padding: 3px 4px 3px 10px; transition: background .15s, color .15s; " +
-            (focusKey === th.key ? "background: " + th.bg + "; color: #14141A; box-shadow: inset 0 0 0 1px " + th.dot + ";" : "color: #6B6A64;") +
+            (focusKey === th.key ? "background: " + th.bg + "; color: #14141A; box-shadow: inset 0 0 0 1px " + th.dot + ";" : "color: " + bgTheme(sel && sel.settings).muted + ";") +
             (focusKey && focusKey !== th.key ? " opacity: .55;" : ""),
           draft: st.themeDraft || "",
           setDraft: (e) => this.setState({ themeDraft: e.target.value.slice(0, 32) }),
@@ -2347,14 +2391,15 @@ class Component extends DCLogic {
           fmtNumbers: fmt("insertOrderedList"),
           openQNotes: () => sq && this.openDrawer({ kind: "question", sid: sel.id, qid: sq.id, rid: null }),
           qNotesLabel: qn.trim() ? "Notes added" : "Notes",
-          qNotesBtnStyle: "display: flex; align-items: center; gap: 6px; margin-left: auto; background: " + (d && d.kind === "question" ? "#F0EFEB" : "transparent") +
-            "; border: 1px solid " + (qn.trim() ? accent : "#DAD7CF") + "; border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 600; color: " + (qn.trim() ? accent : "#6B6A64") + "; cursor: pointer; white-space: nowrap;"
+          qNotesBtnStyle: (() => { const bt = bgTheme(sel && sel.settings); const open = d && d.kind === "question"; const onAcc = qn.trim() && !bt.custom;
+            return "display: flex; align-items: center; gap: 6px; margin-left: auto; background: " + (open ? "#F0EFEB" : "transparent") +
+            "; border: 1px solid " + (onAcc ? accent : bt.custom ? bt.muted : "#DAD7CF") + "; border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: " + (qn.trim() ? 700 : 600) + "; color: " + (open ? "#14141A" : onAcc ? accent : bt.muted) + "; "; })() + "cursor: pointer; white-space: nowrap;"
         };
       })(),
       qrBigOpen: !!st.qrBig && st.view === "present",
       openQrBig: () => this.setState({ qrBig: true }),
       closeQrBig: () => this.setState({ qrBig: false }),
-      askRotate: () => { const cur = this.selected(); if (cur) this.update(cur.id, (s) => ({ ...s, code: makeCode() })); },
+      askRotate: () => this.confirmRotate(),
       prevStyle: "height: 44px; padding: 0 20px; border-radius: 999px; border: 0; background: #F0EFEB; font-size: 15px; font-weight: 600; white-space: nowrap; cursor: pointer; color: " +
         (sel && (sel.activeIndex || 0) > 0 ? "#14141A" : "#C8C6BE") + ";",
       nextStyle: pill(!!(sel && sel.questions.length > (sel.activeIndex || 0) + 1)),
