@@ -1944,8 +1944,10 @@ class Component extends DCLogic {
     const phoneSess = st.sessions.find((s) => s.code === String(st.scanCode).replace(/\s/g, "")) || null;
     const phoneQ = phoneSess ? this.activeQuestion(phoneSess) : null;
     const joined = !!(phoneSess && st.phoneName && st.phoneSessionId === phoneSess.id);
+    // answers permanently deleted from admin no longer exist in the session; once synced (grace for in-flight inserts), drop them
     const mine = phoneSess && phoneQ && joined
-      ? st.mine.filter((m) => m.sid === phoneSess.id && m.qid === phoneQ.id && m.name === st.phoneName)
+      ? st.mine.filter((m) => m.sid === phoneSess.id && m.qid === phoneQ.id && m.name === st.phoneName &&
+          (phoneSess.responses.some((r) => r.id === m.id) || Date.now() - m.ts < 8000))
       : [];
     const rmAnswer = (sess, r) => () => this.ask(
       "Delete this answer?",
@@ -2627,7 +2629,7 @@ class Component extends DCLogic {
       hasMine: mine.length > 0,
       myAnswers: mine.slice().reverse().map((m) => {
         const rec = phoneSess.responses.find((r) => r.id === m.id);
-        const removed = rec ? (!!rec.deletedAt && rec.deletedBy !== "participant") : Date.now() - m.ts > 6000;
+        const removed = !!rec && !!rec.deletedAt && rec.deletedBy !== "participant";
         return {
           text: m.text,
           removed,
