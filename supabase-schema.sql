@@ -46,3 +46,11 @@ create policy participants_all on participants
 drop policy if exists responses_all on responses;
 create policy responses_all on responses
   for all to anon using (true) with check (true);
+
+-- v2: soft delete + themes (safe to re-run)
+alter table responses add column if not exists theme      text;
+alter table responses add column if not exists deleted_at timestamptz;
+alter table responses add column if not exists deleted_by text;
+
+-- v3: per-session presenter settings (safe to re-run)
+alter table sessions add column if not exists settings jsonb not null default '{}'::jsonb;

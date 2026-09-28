@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..700&display=swap" rel="stylesheet" />
+<style>
+  body { margin: 0; font-family: "Sofia Pro", Inter, system-ui, sans-serif; background: #E9E7E1; color: #14141A; }
+  a { color: #2C4A7C; }
+  a:hover { color: #1D3459; }
+</style>
+</helmet>
+<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;">
+  <div style="background: #F6F5F2; border: 1px solid #DAD7CF; border-radius: 18px; padding: 28px; max-width: 520px; width: 100%; display: flex; flex-direction: column; gap: 16px;">
+    <div style="font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #9A988F; font-weight: 600;">Pulse · testing only</div>
+    <div style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em;">Sample data</div>
+    <div style="font-size: 15px; color: #3C3B35; line-height: 1.5;">Adds two sample sessions to this browser's local data. It only works when Supabase isn't configured (local mode). Your own sessions are kept. Nothing here is part of the file you upload.</div>
+    <div style="display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: #6B6A64; line-height: 1.5;">
+      <div><span style="font-weight: 600; color: #14141A;">Retailer Dashboard research (sample)</span> · 3 questions, 14 people, about 45 answers with themes, gibberish, one deleted answer and one Presenter answer</div>
+      <div><span style="font-weight: 600; color: #14141A;">Q3 team retro (sample)</span> · 2 questions, 6 people</div>
+    </div>
+    <div style="font-size: 14px; color: #2C4A7C; font-weight: 600; min-height: 20px;">{{ status }}</div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <button onClick="{{ load }}" style="background: #2C4A7C; color: #fff; border: 0; border-radius: 999px; padding: 11px 20px; font-size: 14px; font-weight: 600; cursor: pointer;" style-hover="background: #1D3459;">Load sample data</button>
+      <button onClick="{{ remove }}" style="background: transparent; border: 1px solid #DAD7CF; border-radius: 999px; padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer; color: #C0392B;" style-hover="border-color: #C0392B;">Remove sample data</button>
+      <div style="flex: 1;"></div>
+      <a href="Polling Platform.dc.html" style="align-self: center; font-size: 14px; font-weight: 600;">Open Pulse →</a>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const KEY = "pulse.sessions.v1";
+
+function read() { try { const v = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(v) ? v : []; } catch (e) { return []; } }
+function write(v) { localStorage.setItem(KEY, JSON.stringify(v)); }
+
+function build() {
+  const now = Date.now();
+  let t = now - 60 * 60 * 1000;
+  const tick = () => (t += 20000 + Math.floor(Math.random() * 40000));
+  const q = (id, text) => ({ id, text });
+  const a = (sid) => (qid, name, text, extra) => ({ id: sid + "-r" + Math.random().toString(36).slice(2, 9), qid, name, text, ts: tick(), ...(extra || {}) });
+
+  const s1 = "sample-retailer";
+  const r1 = a(s1);
+  const Q1 = "sample-q1", Q2 = "sample-q2", Q3 = "sample-q3";
+  const people1 = ["Meli", "Jordan", "Priya", "Sam", "Alex", "Taylor", "Chris", "Dana", "Luis", "Mia", "Noah", "Ava", "Kai", "Zoe"];
+  const resp1 = [
+    r1(Q1, "Meli", "Onboarding is confusing for new retailers"),
+    r1(Q1, "Jordan", "Pricing page is hard to understand"),
+    r1(Q1, "Priya", "The onboarding flow needs clearer steps"),
+    r1(Q1, "Sam", "Charts are slow to load"),
+    r1(Q1, "Meli", "Pricing tiers are confusing"),
+    r1(Q1, "Alex", "qdijwpoqdj"),
+    r1(Q1, "Taylor", "I love the charts, they help with weekly reporting"),
+    r1(Q1, "Chris", "There should be more onboarding videos"),
+    r1(Q1, "Dana", "Charts need an export button"),
+    r1(Q1, "Luis", "pricing is tricky for multi-store retailers"),
+    r1(Q1, "Mia", "Hehjenejjejenjee"),
+    r1(Q1, "Meli", "Onboarding checklist would help"),
+    r1(Q1, "Priya", "Chart colors are hard to read"),
+    r1(Q1, "Noah", "Export to CSV from every table"),
+    r1(Q1, "Jordan", "Export is buried in settings"),
+    r1(Q1, "Presenter", "Someone said: search is too slow"),
+    r1(Q1, "Ava", "This is a test please ignore", { deletedAt: now - 30 * 60 * 1000, deletedBy: "presenter" }),
+    r1(Q2, "Meli", "Fix the pricing page first"),
+    r1(Q2, "Priya", "Onboarding, definitely"),
+    r1(Q2, "Sam", "Speed up the charts"),
+    r1(Q2, "Jordan", "Clear pricing for returns fees"),
+    r1(Q2, "Alex", "Onboarding emails"),
+    r1(Q2, "Taylor", "Chart load time"),
+    r1(Q2, "Meli", "Export options"),
+    r1(Q2, "Kai", "Search"),
+    r1(Q2, "Zoe", "Dark mode"),
+    r1(Q2, "Chris", "Pricing calculator"),
+    r1(Q2, "Priya", "Better onboarding docs"),
+    r1(Q2, "Dana", "Bulk export"),
+    r1(Q3, "Meli", "Weekly email summary of returns"),
+    r1(Q3, "Priya", "Onboarding progress tracker"),
+    r1(Q3, "Jordan", "Pricing comparison table"),
+    r1(Q3, "Sam", "Real-time charts"),
+    r1(Q3, "Meli", "Scheduled export to our data warehouse"),
+    r1(Q3, "Luis", "Store-level pricing"),
+    r1(Q3, "Mia", "Mobile app"),
+    r1(Q3, "Priya", "Guided onboarding for staff"),
+    r1(Q3, "Taylor", "Custom charts"),
+    r1(Q3, "Noah", "Export to Google Sheets"),
+    r1(Q3, "Jordan", "Transparent pricing for add-ons"),
+    r1(Q3, "Ava", "asdfghjkl"),
+    r1(Q3, "Kai", "Search by order number"),
+    r1(Q3, "Sam", "Charts on the home page"),
+    r1(Q3, "Meli", "Onboarding for multi-location retailers")
+  ];
+
+  const s2 = "sample-retro";
+  const r2 = a(s2);
+  const P1 = "sample-p1", P2 = "sample-p2";
+  const people2 = ["Meli", "Jordan", "Priya", "Sam", "Alex", "Taylor"];
+  const resp2 = [
+    r2(P1, "Meli", "Shipping the dashboard redesign on time"),
+    r2(P1, "Jordan", "Great collaboration with support"),
+    r2(P1, "Priya", "Research sessions were really useful"),
+    r2(P1, "Sam", "Fewer meetings"),
+    r2(P1, "Alex", "Design reviews were faster"),
+    r2(P1, "Meli", "Research insights shaped the roadmap"),
+    r2(P2, "Taylor", "Too many meetings on Tuesdays"),
+    r2(P2, "Jordan", "Handoff to engineering was late"),
+    r2(P2, "Sam", "Meetings without agendas"),
+    r2(P2, "Priya", "Research recruiting took too long"),
+    r2(P2, "Meli", "Engineering handoff docs were incomplete")
+  ];
+
+  return [
+    {
+      id: s1, name: "Retailer Dashboard research (sample)", code: "11223344",
+      questions: [
+        q(Q1, "How can we better understand the Retailer Dashboard user experience?"),
+        q(Q2, "What is the one thing you would fix first?"),
+        q(Q3, "What feature would you add next?")
+      ],
+      activeIndex: 0, participants: people1, responses: resp1
+    },
+    {
+      id: s2, name: "Q3 team retro (sample)", code: "55667788",
+      questions: [q(P1, "What went well this quarter?"), q(P2, "What should we change?")],
+      activeIndex: 0, participants: people2, responses: resp2
+    }
+  ];
+}
+
+class Component extends DCLogic {
+  state = { status: "" };
+  renderVals() {
+    return {
+      status: this.state.status,
+      load: () => {
+        const mine = read().filter((s) => !String(s.id).startsWith("sample-"));
+        write([...build(), ...mine]);
+        this.setState({ status: "Loaded 2 sample sessions. Open Pulse to try them (codes 1122 3344 and 5566 7788)." });
+      },
+      remove: () => {
+        const before = read();
+        const after = before.filter((s) => !String(s.id).startsWith("sample-"));
+        write(after);
+        this.setState({ status: "Removed " + (before.length - after.length) + " sample sessions." });
+      }
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -13,6 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&display=swap" rel="stylesheet" />
 <script src="./qr.js"></script>
 <script src="./supabase-config.js"></script>
+<script src="./music.js"></script>
 <title>Pulse</title>
 <style>
   * { box-sizing: border-box; }
@@ -23,6 +24,19 @@
   textarea { resize: none; }
   @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
   @keyframes fresh { 0%, 12% { background-color: #D6E0F0; box-shadow: 0 0 0 2px #B9C8E2; } }
+  @keyframes rowIn { from { opacity: 0; transform: translateY(24px) scale(.98); } to { opacity: 1; transform: none; } }
+  @keyframes medalDrop { 0% { opacity: 0; transform: translateY(-60px) rotate(-25deg) scale(.5); } 60% { opacity: 1; transform: translateY(6px) rotate(8deg) scale(1.12); } 80% { transform: translateY(-2px) rotate(-3deg) scale(.97); } 100% { opacity: 1; transform: none; } }
+  @keyframes barGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes countPop { 0% { opacity: 0; transform: scale(.6); } 70% { opacity: 1; transform: scale(1.12); } 100% { opacity: 1; transform: none; } }
+  @keyframes drum { 0% { opacity: 0; transform: translateY(6px); } 15%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+  @keyframes podiumIn { 0% { opacity: 0; transform: translateY(48px) scale(.92); } 65% { opacity: 1; transform: translateY(-6px) scale(1.02); } 100% { opacity: 1; transform: none; } }
+  @keyframes crownDrop { 0% { opacity: 0; transform: translateY(-30px) rotate(-20deg) scale(.6); } 60% { opacity: 1; transform: translateY(3px) rotate(6deg) scale(1.1); } 100% { opacity: 1; transform: none; } }
+  @keyframes crownBob { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-4px) rotate(-4deg); } }
+  @keyframes listIn { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: none; } }
+  @keyframes goldGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(201,161,59,0); } 50% { box-shadow: 0 0 0 7px rgba(201,161,59,.18); } }
+  @keyframes confA { 0% { opacity: 1; transform: translate3d(0,-20px,0) rotate(0deg); } 100% { opacity: .9; transform: translate3d(60px,110vh,0) rotate(540deg); } }
+  @keyframes confB { 0% { opacity: 1; transform: translate3d(0,-20px,0) rotate(0deg); } 100% { opacity: .9; transform: translate3d(-80px,110vh,0) rotate(-420deg); } }
+  @keyframes confC { 0% { opacity: 1; transform: translate3d(0,-20px,0) rotate(0deg); } 100% { opacity: .9; transform: translate3d(20px,110vh,0) rotate(720deg); } }
 </style>
 </helmet>
 <div style="min-height: 100vh; display: flex; flex-direction: column;">
@@ -39,6 +53,7 @@
         <button onClick="{{ goPresent }}" style="{{ tabPresentStyle }}">Present</button>
         <button onClick="{{ goPhone }}" style="{{ tabPhoneStyle }}">Participant</button>
       </div>
+      <button onClick="{{ openConn }}" title="Supabase connection" style="background: transparent; border: 1px solid rgba(246,245,242,.2); color: rgba(246,245,242,.8); border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;" style-hover="border-color: rgba(246,245,242,.6); color: #F6F5F2;">Connection</button>
     </sc-if>
   </div>
 
@@ -50,6 +65,24 @@
   </sc-if>
 
   <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ true }}">
+    <sc-if value="{{ hasLive }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width: 1280px; width: 100%; margin: 0 auto; padding: 20px 28px 0;">
+        <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; background: #2C4A7C; color: #fff; border-radius: 16px; padding: 14px 16px 14px 20px;">
+          <div style="display: flex; align-items: center; gap: 8px; flex: none;">
+            <span style="width: 8px; height: 8px; border-radius: 999px; background: #8FD19E; box-shadow: 0 0 0 4px rgba(143,209,158,.25);"></span>
+            <span style="font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700;">Live now</span>
+          </div>
+          <div style="flex: 1; min-width: 220px; display: flex; flex-direction: column; gap: 2px;">
+            <div style="font-size: 15px; font-weight: 600;">{{ liveName }} · {{ livePosition }}</div>
+            <div style="font-size: 14px; color: #D6E0F0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ liveQuestion }}</div>
+          </div>
+          <div style="display: flex; gap: 8px; flex: none;">
+            <button onClick="{{ endLive }}" style="background: transparent; border: 1px solid rgba(255,255,255,.35); color: #fff; border-radius: 999px; padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer;" style-hover="background: rgba(255,255,255,.1);">End session</button>
+            <button onClick="{{ returnLive }}" style="background: #fff; color: #2C4A7C; border: 0; border-radius: 999px; padding: 11px 20px; font-size: 14px; font-weight: 600; cursor: pointer;" style-hover="background: #E9EEF7;">Return to session</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
     <div style="display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 24px; padding: 28px; align-items: start; max-width: 1280px; width: 100%; margin: 0 auto;">
 
       <div style="display: flex; flex-direction: column; gap: 12px;">
@@ -106,6 +139,32 @@
               <div style="font-size: 13px; color: #6B6A64;">answers from {{ selParticipantCount }} participants</div>
               <div style="flex: 1;"></div>
               <button onClick="{{ askClear }}" style="align-self: flex-start; background: transparent; border: 1px solid #DAD7CF; border-radius: 999px; padding: 8px 14px; font-size: 13px; cursor: pointer; color: #6B6A64;" style-hover="border-color: #C0392B; color: #C0392B;">Clear answers</button>
+            </div>
+          </div>
+
+          <div style="background: #fff; border: 1px solid #DAD7CF; border-radius: 14px; padding: 6px 16px; display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid #EDEBE6;">
+              <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                <div style="font-size: 14px; font-weight: 600;">Show response progress</div>
+                <div style="font-size: 13px; color: #6B6A64; line-height: 1.4;">Shows "X of Y responded" on the presenter screen. When off, only the answer count is shown.</div>
+              </div>
+              <button onClick="{{ toggleShowProgress }}" style="background: transparent; border: 0; padding: 4px; cursor: pointer; flex: none;"><span style="{{ progressTrackStyle }}"><span style="{{ progressKnobStyle }}"></span></span></button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid #EDEBE6; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 2px;">
+                <div style="font-size: 14px; font-weight: 600;">Default timer</div>
+                <div style="font-size: 13px; color: #6B6A64;">Starting time for each question's timer.</div>
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <sc-for list="{{ adminTimerPresets }}" as="p" hint-placeholder-count="5">
+                  <button onClick="{{ p.pick }}" style="{{ p.style }}">{{ p.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px 0;">
+              <div style="font-size: 14px; font-weight: 600;">YouTube music</div>
+              <input value="{{ ytUrlDraft }}" onChange="{{ setYtUrl }}" placeholder="Paste a YouTube video or playlist link" style="border: 1px solid #DAD7CF; border-radius: 10px; padding: 10px 12px; font-size: 14px; background: #F6F5F2;" />
+              <div style="{{ ytHelpStyle }}">{{ ytHelp }}</div>
             </div>
           </div>
 
@@ -178,7 +237,7 @@
     <div style="flex: 1; background: #fff; display: flex; flex-direction: column; padding: 20px 28px 16px; min-height: calc(100vh - 54px);">
 
       <div style="display: flex; align-items: center; gap: 12px;">
-        <button onClick="{{ endPresentation }}" title="End session" style="width: 40px; height: 40px; border-radius: 999px; border: 0; background: #F0EFEB; cursor: pointer; font-size: 15px; color: #6B6A64;" style-hover="background: #E4E2DC;">✕</button>
+        <button onClick="{{ switchToAdmin }}" style="background: #F0EFEB; border: 0; border-radius: 999px; padding: 10px 18px; font-size: 14px; font-weight: 600; cursor: pointer; color: #3C3B35; white-space: nowrap;" style-hover="background: #E4E2DC;">← Switch to admin view</button>
         <div style="flex: 1;"></div>
         <div style="background: #F0EFEB; border-radius: 999px; padding: 12px 22px; display: flex; align-items: center; gap: 12px; font-size: 19px; min-width: 0; max-width: 100%;">
           <span style="color: #3C3B35; white-space: nowrap;">Scan the QR code to join</span>
@@ -195,7 +254,7 @@
             <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap; min-height: 28px;">
               <button onClick="{{ toggleGrouping }}" style="display: flex; align-items: center; gap: 8px; background: transparent; border: 0; padding: 2px 0; cursor: pointer; font-size: 13px; font-weight: 600; color: #6B6A64;">
                 <span style="{{ groupingTrackStyle }}"><span style="{{ groupingKnobStyle }}"></span></span>
-                Sentiment grouping
+                Group themes
               </button>
               <sc-for list="{{ themeLegend }}" as="t" hint-placeholder-count="0">
                 <div style="{{ t.chipStyle }}">
@@ -218,8 +277,11 @@
                 </div>
               </sc-for>
               <sc-if value="{{ groupingOn }}" hint-placeholder-val="{{ false }}">
+                <sc-if value="{{ canAddTheme }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ addTheme }}" style="background: transparent; border: 1px dashed #C8C6BE; border-radius: 999px; padding: 4px 11px; font-size: 12px; font-weight: 600; color: #6B6A64; cursor: pointer; white-space: nowrap;" style-hover="border-color: #14141A; color: #14141A;">+ Add theme</button>
+                </sc-if>
                 <div style="flex: 1;"></div>
-                <button onClick="{{ rerunThemes }}" style="background: transparent; border: 1px solid #DAD7CF; border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 600; color: #6B6A64; cursor: pointer; white-space: nowrap;" style-hover="border-color: #14141A; color: #14141A;">Re-run sentiment analysis</button>
+                <button onClick="{{ rerunThemes }}" style="background: transparent; border: 1px solid #DAD7CF; border-radius: 999px; padding: 5px 12px; font-size: 12px; font-weight: 600; color: #6B6A64; cursor: pointer; white-space: nowrap;" style-hover="border-color: #14141A; color: #14141A;">Re-generate themes</button>
               </sc-if>
             </div>
             <div ref="{{ gridRef }}" style="display: flex; gap: 14px; align-items: flex-start;">
@@ -264,18 +326,85 @@
             <div style="font-size: 30px; font-weight: 700; letter-spacing: .02em; font-variant-numeric: tabular-nums; white-space: nowrap;">{{ selCode }}</div>
             <button onClick="{{ rotateCode }}" style="background: transparent; border: 1px solid #C8C6BE; border-radius: 999px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; color: #3C3B35;" style-hover="background: #14141A; color: #fff; border-color: #14141A;">Rotate QR</button>
           </div>
-          <div style="background: #F0EFEB; border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 14px;">
-            <div style="font-size: 24px;"><span style="font-weight: 700;">{{ respondedCount }}</span> of <span style="font-weight: 700;">{{ selParticipantCount }}</span> responded</div>
-            <div style="height: 4px; background: #DAD7CF; border-radius: 999px; overflow: hidden;">
-              <div style="height: 100%; background: #2C4A7C; border-radius: 999px; width: {{ respondedPct }};"></div>
+          <div style="background: #F0EFEB; border-radius: 16px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button onClick="{{ toggleTimerEdit }}" title="Set time" style="{{ timerTextStyle }}">{{ timerText }}</button>
+              <div style="flex: 1;"></div>
+              <button onClick="{{ resetTimer }}" title="Reset timer" style="width: 38px; height: 38px; border-radius: 999px; border: 0; background: #fff; cursor: pointer; color: #6B6A64; display: grid; place-items: center; padding: 0;" style-hover="color: #14141A;">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.7-4"></path><path d="M2.5 2.5v3h3"></path></svg>
+              </button>
+              <button onClick="{{ toggleTimer }}" title="{{ timerBtnTitle }}" style="{{ timerBtnStyle }}">
+                <sc-if value="{{ timerRunning }}" hint-placeholder-val="{{ false }}">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><rect x="2.5" y="2" width="3" height="10" rx="1"></rect><rect x="8.5" y="2" width="3" height="10" rx="1"></rect></svg>
+                </sc-if>
+                <sc-if value="{{ timerStopped }}" hint-placeholder-val="{{ true }}">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M3.5 2.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L4.4 1.7a.6.6 0 0 0-.9.5z"></path></svg>
+                </sc-if>
+              </button>
             </div>
+            <sc-if value="{{ timerDone }}" hint-placeholder-val="{{ false }}">
+              <div style="font-size: 13px; font-weight: 600; color: #C0392B; margin-top: -6px;">Time's up</div>
+            </sc-if>
+            <sc-if value="{{ timerEdit }}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                <sc-for list="{{ timerPresets }}" as="p" hint-placeholder-count="5">
+                  <button onClick="{{ p.pick }}" style="{{ p.style }}">{{ p.label }}</button>
+                </sc-for>
+                <input value="{{ timerDraft }}" onChange="{{ setTimerDraft }}" onKeyDown="{{ timerDraftKey }}" placeholder="m:ss" style="width: 64px; border: 1px solid #DAD7CF; border-radius: 999px; padding: 5px 10px; font-size: 13px; background: #fff; font-variant-numeric: tabular-nums;" />
+              </div>
+            </sc-if>
+            <div style="height: 1px; background: #E1DFD8;"></div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button onClick="{{ toggleMusic }}" title="{{ musicBtnTitle }}" style="{{ musicBtnStyle }}">
+                <sc-if value="{{ musicOn }}" hint-placeholder-val="{{ false }}">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6h2.5l3.5-3v10L5 10H2.5z" fill="currentColor"></path><path d="M11 5.5a3.5 3.5 0 0 1 0 5"></path><path d="M12.8 3.5a6 6 0 0 1 0 9"></path></svg>
+                </sc-if>
+                <sc-if value="{{ musicOff }}" hint-placeholder-val="{{ true }}">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6h2.5l3.5-3v10L5 10H2.5z" fill="currentColor"></path><path d="M11 6l3.5 4M14.5 6L11 10"></path></svg>
+                </sc-if>
+              </button>
+              <button onClick="{{ prevTrack }}" title="Previous track" style="width: 28px; height: 28px; border-radius: 999px; border: 0; background: transparent; cursor: pointer; color: #6B6A64; font-size: 16px; padding: 0;" style-hover="background: #E4E2DC; color: #14141A;">‹</button>
+              <div style="flex: 1; min-width: 0; text-align: center; font-size: 14px; font-weight: 600; color: #3C3B35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ trackName }}</div>
+              <button onClick="{{ nextTrack }}" title="Next track" style="width: 28px; height: 28px; border-radius: 999px; border: 0; background: transparent; cursor: pointer; color: #6B6A64; font-size: 16px; padding: 0;" style-hover="background: #E4E2DC; color: #14141A;">›</button>
+            </div>
+            <sc-if value="{{ musicOn }}" hint-placeholder-val="{{ false }}">
+              <input type="range" min="0" max="100" value="{{ musicVolPct }}" onChange="{{ setMusicVol }}" title="Volume" style="width: 100%; accent-color: #2C4A7C;" />
+            </sc-if>
+            <sc-if value="{{ isYouTube }}" hint-placeholder-val="{{ false }}">
+              <div ref="{{ ytRef }}" style="width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #14141A;"></div>
+            </sc-if>
           </div>
+          <sc-if value="{{ showProgress }}" hint-placeholder-val="{{ false }}">
+            <div style="background: #F0EFEB; border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 14px;">
+              <div style="font-size: 24px;"><span style="font-weight: 700;">{{ respondedCount }}</span> of <span style="font-weight: 700;">{{ selParticipantCount }}</span> responded</div>
+              <div style="height: 4px; background: #DAD7CF; border-radius: 999px; overflow: hidden;">
+                <div style="height: 100%; background: #2C4A7C; border-radius: 999px; width: {{ respondedPct }};"></div>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ hideProgress }}" hint-placeholder-val="{{ true }}">
+            <div style="background: #F0EFEB; border-radius: 16px; padding: 18px 22px; display: flex; align-items: baseline; gap: 8px;">
+              <span style="font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums;">{{ liveCount }}</span>
+              <span style="font-size: 18px; color: #3C3B35;">{{ liveCountLabel }}</span>
+            </div>
+          </sc-if>
         </div>
       </div>
 
-      <div style="padding-top: 24px;">
+      <div style="padding-top: 24px; position: relative;">
+        <sc-if value="{{ hasMentionList }}" hint-placeholder-val="{{ false }}">
+          <div style="position: absolute; bottom: calc(100% - 18px); left: 12px; z-index: 10; min-width: 220px; background: #fff; border: 1px solid #DAD7CF; border-radius: 12px; box-shadow: 0 12px 28px rgba(20,20,26,.14); padding: 6px; display: flex; flex-direction: column;">
+            <div style="font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #9A988F; padding: 6px 10px 4px;">Post on behalf of</div>
+            <sc-for list="{{ mentionList }}" as="m" hint-placeholder-count="3">
+              <button onMouseDown="{{ m.pick }}" style="{{ m.style }}">{{ m.name }}</button>
+            </sc-for>
+          </div>
+        </sc-if>
         <div style="display: flex; align-items: center; gap: 8px; border: 1px solid #DAD7CF; border-radius: 999px; padding: 5px 5px 5px 18px; background: #fff;">
-          <input value="{{ presenterDraft }}" onChange="{{ setPresenterDraft }}" onKeyDown="{{ presenterKeyDown }}" maxLength="250" placeholder="Type a shouted-out answer" style="flex: 1; min-width: 0; border: 0; outline: none; padding: 8px 0; font-size: 16px; background: transparent;" />
+          <sc-if value="{{ hasMentionAs }}" hint-placeholder-val="{{ false }}">
+            <span style="flex: none; display: flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: #2C4A7C; background: #E9EEF7; border-radius: 999px; padding: 4px 4px 4px 10px; white-space: nowrap;">as {{ mentionAs }}<button onClick="{{ clearMention }}" title="Remove tag" style="width: 18px; height: 18px; border-radius: 999px; border: 0; background: transparent; color: #2C4A7C; cursor: pointer; font-size: 10px; padding: 0; line-height: 1;" style-hover="background: #D6E0F0;">✕</button></span>
+          </sc-if>
+          <input value="{{ presenterDraft }}" onChange="{{ setPresenterDraft }}" onKeyDown="{{ presenterKeyDown }}" maxLength="250" placeholder="Type an answer and tag someone using @" style="flex: 1; min-width: 0; border: 0; outline: none; padding: 8px 0; font-size: 16px; background: transparent;" />
           <div style="font-size: 12px; color: #9A988F; font-variant-numeric: tabular-nums; white-space: nowrap;">{{ presenterRemaining }} left</div>
           <button onClick="{{ addPresenterAnswer }}" style="{{ presenterAddStyle }}">Enter</button>
         </div>
@@ -288,6 +417,76 @@
         <div style="flex: 1;"></div>
         <button onClick="{{ nextQuestion }}" style="{{ nextStyle }}">Next question →</button>
         <button onClick="{{ endPresentation }}" style="background: #F0EFEB; border: 0; border-radius: 999px; padding: 12px 22px; font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap; color: #C0392B;" style-hover="background: #E4E2DC;">End session</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isBoard }}" hint-placeholder-val="{{ false }}">
+    <div style="flex: 1; background: #fff; height: calc(100vh - 54px); display: flex; flex-direction: column; padding: 18px 28px 18px; position: relative; overflow: hidden;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: #9A988F; font-weight: 600;">Session complete</div>
+        <div style="flex: 1;"></div>
+        <div style="font-size: 15px; font-weight: 600; color: #9A988F;">{{ boardSession }}</div>
+      </div>
+
+      <div style="flex: 1; min-height: 0; width: 100%; max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;">
+          <div style="font-size: 44px; font-weight: 600; line-height: 1.1; letter-spacing: -0.025em;">Top contributors</div>
+          <div style="font-size: 17px; color: #6B6A64;">{{ boardSummary }}</div>
+        </div>
+        <div style="height: 28px; flex: none; position: relative; width: 100%; text-align: center;">
+          <div style="{{ drumStyle }}">And the top contributor is…</div>
+        </div>
+
+        <div style="display: flex; justify-content: center; align-items: flex-end; gap: 16px; flex: none; width: 100%; padding-top: 18px;">
+          <sc-for list="{{ podium }}" as="p" hint-placeholder-count="3">
+            <div style="{{ p.cardStyle }}">
+              <div style="{{ p.medalWrapStyle }}">
+                <sc-if value="{{ p.isFirst }}" hint-placeholder-val="{{ false }}">
+                  <div style="{{ p.crownStyle }}">
+                    <svg width="40" height="30" viewBox="0 0 24 18"><path d="M2 16 L3.4 5 L8.4 9.6 L12 2 L15.6 9.6 L20.6 5 L22 16 Z" fill="#C9A13B" stroke="#A8832A" stroke-width="0.8" stroke-linejoin="round"></path><circle cx="12" cy="2" r="1.4" fill="#E8CB78"></circle><circle cx="3.4" cy="5" r="1.2" fill="#E8CB78"></circle><circle cx="20.6" cy="5" r="1.2" fill="#E8CB78"></circle></svg>
+                  </div>
+                </sc-if>
+                <div style="{{ p.ribbonLStyle }}"></div>
+                <div style="{{ p.ribbonRStyle }}"></div>
+                <div style="{{ p.medalStyle }}">{{ p.rankLabel }}</div>
+              </div>
+              <div style="{{ p.nameStyle }}">{{ p.name }}</div>
+              <div style="display: flex; align-items: baseline; gap: 6px;">
+                <span style="{{ p.countStyle }}">{{ p.count }}</span>
+                <span style="font-size: 14px; color: #6B6A64;">{{ p.countLabel }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div ref="{{ boardListRef }}" style="flex: 1; min-height: 0; width: 100%; max-width: 560px; display: flex; flex-direction: column; padding-top: 18px;">
+          <sc-for list="{{ boardRest }}" as="r" hint-placeholder-count="4">
+            <div style="{{ r.rowStyle }}">
+              <div style="width: 44px; flex: none; font-weight: 600; color: #9A988F; font-variant-numeric: tabular-nums;">{{ r.rankLabel }}</div>
+              <div style="flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ r.name }}</div>
+              <div style="flex: none; font-weight: 700; font-variant-numeric: tabular-nums;">{{ r.count }}</div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ hasBoardMore }}" hint-placeholder-val="{{ false }}">
+            <div style="{{ boardMoreStyle }}">{{ boardMore }}</div>
+          </sc-if>
+          <sc-if value="{{ boardEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size: 18px; color: #B4B2AA; padding: 24px 0; text-align: center;">No answers were submitted in this session.</div>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="position: absolute; inset: 0; pointer-events: none; overflow: hidden;">
+        <sc-for list="{{ confetti }}" as="c" hint-placeholder-count="0">
+          <div style="{{ c.style }}"></div>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; padding-top: 14px; position: relative;">
+        <div style="flex: 1;"></div>
+        <button onClick="{{ replayBoard }}" style="background: #F0EFEB; border: 0; border-radius: 999px; padding: 12px 22px; font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap;" style-hover="background: #E4E2DC;">Replay</button>
+        <button onClick="{{ closeBoard }}" style="background: #2C4A7C; color: #fff; border: 0; border-radius: 999px; padding: 12px 24px; font-size: 15px; font-weight: 600; cursor: pointer; white-space: nowrap;" style-hover="background: #1D3459;">Done</button>
       </div>
     </div>
   </sc-if>
@@ -383,6 +582,31 @@
     </div>
   </sc-if>
 
+  <sc-if value="{{ connOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; z-index: 55; background: rgba(20,20,26,.4); display: flex; align-items: center; justify-content: center; padding: 20px;">
+      <div style="background: #F6F5F2; border-radius: 18px; padding: 26px; max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 24px 60px rgba(20,20,26,.3);">
+        <div style="font-size: 20px; font-weight: 600; letter-spacing: -0.015em;">Supabase connection</div>
+        <div style="font-size: 14px; color: #3C3B35; line-height: 1.5;">Saved only in this browser, so your GitHub repo doesn't need to contain any keys. Participants' phones receive the connection through the QR code. Use the publishable key, never the secret key.</div>
+        <sc-if value="{{ connFromFile }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size: 13px; color: #7A2318; background: #FBEDEB; border-radius: 10px; padding: 10px 12px; line-height: 1.45;">Connected through supabase-config.js. If that file is generated from GitHub secrets at deploy time, there's nothing to change here. If the keys are typed into the file in your repo, move them to GitHub secrets.</div>
+        </sc-if>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #6B6A64;">Project URL
+          <input value="{{ connUrl }}" onChange="{{ setConnUrl }}" placeholder="https://xxxx.supabase.co" style="border: 1px solid #DAD7CF; border-radius: 10px; padding: 11px 12px; font-size: 15px; background: #fff; text-transform: none; letter-spacing: 0; color: #14141A;" />
+        </label>
+        <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #6B6A64;">Publishable key
+          <input value="{{ connKey }}" onChange="{{ setConnKey }}" placeholder="sb_publishable_…" style="border: 1px solid #DAD7CF; border-radius: 10px; padding: 11px 12px; font-size: 15px; background: #fff; text-transform: none; letter-spacing: 0; color: #14141A;" />
+        </label>
+        <div style="display: flex; gap: 8px; justify-content: flex-end; padding-top: 6px; flex-wrap: wrap;">
+          <sc-if value="{{ connHasSaved }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ disconnectConn }}" style="background: transparent; border: 0; padding: 11px 6px; font-size: 14px; font-weight: 600; cursor: pointer; color: #C0392B; margin-right: auto;">Disconnect</button>
+          </sc-if>
+          <button onClick="{{ closeConn }}" style="background: transparent; border: 1px solid #DAD7CF; border-radius: 999px; padding: 11px 18px; font-size: 14px; font-weight: 600; cursor: pointer;" style-hover="border-color: #14141A;">Cancel</button>
+          <button onClick="{{ saveConn }}" style="background: #2C4A7C; color: #fff; border: 0; border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 600; cursor: pointer;" style-hover="background: #1D3459;">Save and reload</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
   <sc-if value="{{ hasConfirm }}" hint-placeholder-val="{{ false }}">
     <div style="position: fixed; inset: 0; z-index: 60; background: rgba(20,20,26,.4); display: flex; align-items: center; justify-content: center; padding: 20px;">
       <div style="background: #F6F5F2; border-radius: 18px; padding: 26px; max-width: 420px; width: 100%; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 24px 60px rgba(20,20,26,.3);">
@@ -437,6 +661,112 @@ function seed() {
   }];
 }
 
+const MEDALS = [
+  { dot: "#C9A13B", ring: "#E8CB78", bg: "#FBF3DC" },
+  { dot: "#9EA4AD", ring: "#CDD1D6", bg: "#F1F2F4" },
+  { dot: "#B07445", ring: "#D9A67F", bg: "#F6EAE0" }
+];
+const BOARD_MAX = 10;
+function buildBoard(sess) {
+  const by = {};
+  sess.responses.forEach((r) => {
+    if (r.deletedAt) return;
+    const n = String(r.name || "").trim();
+    if (!n || n.toLowerCase() === "presenter") return;
+    const k = n.toLowerCase();
+    if (!by[k]) by[k] = { name: n, count: 0, first: r.ts || 0 };
+    by[k].count++;
+    by[k].first = Math.min(by[k].first, r.ts || 0);
+  });
+  const list = Object.values(by).sort((a, b) => b.count - a.count || a.first - b.first);
+  let prev = null;
+  list.forEach((p, i) => { p.rank = prev && prev.count === p.count ? prev.rank : i + 1; prev = p; });
+  const total = list.reduce((s, p) => s + p.count, 0);
+  return { session: sess.name, list, total };
+}
+function boardVals(b, avail) {
+  const empty = { podium: [], boardRest: [], confetti: [], boardSession: "", boardSummary: "", boardEmpty: false, hasBoardMore: false, boardMore: "", boardMoreStyle: "", drumStyle: "display: none;" };
+  if (!b) return empty;
+  const top = b.list.slice(0, 3);
+  const others = b.list.slice(3);
+  const H = avail || 260;
+  const ROW = 46, MORE = 34;
+  let fit = Math.max(0, Math.floor(H / ROW));
+  if (fit < others.length) fit = Math.max(0, Math.floor((H - MORE) / ROW));
+  fit = Math.min(fit, others.length, BOARD_MAX - 3);
+  const rest = others.slice(0, fit);
+  const more = b.list.length - top.length - rest.length;
+
+  // timing: rest fast bottom-to-top, then 3rd, 2nd, drumroll, 1st
+  let t = 0.4;
+  const restDelay = rest.map((_, i) => 0.4 + (rest.length - 1 - i) * 0.12);
+  if (rest.length) t = restDelay[0] + 0.55;
+  const topDelay = [];
+  let drumStart = null;
+  if (top[2]) { topDelay[2] = t; t += 0.9; }
+  if (top[1]) { topDelay[1] = t; t += 0.8; }
+  if (top[0]) { drumStart = t; t += 1.7; topDelay[0] = t; }
+  const goldAt = top[0] ? topDelay[0] : 0;
+
+  const card = (p, pos) => {
+    const d = topDelay[pos];
+    const medal = MEDALS[Math.min(p.rank, 3) - 1];
+    const first = pos === 0;
+    const size = first ? 84 : 66;
+    return {
+      isFirst: first,
+      name: p.name,
+      count: p.count,
+      countLabel: p.count === 1 ? "answer" : "answers",
+      rankLabel: String(p.rank),
+      cardStyle: "position: relative; flex: 0 1 " + (first ? "290px" : "240px") + "; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 8px; border-radius: 22px; text-align: center; background: " + medal.bg +
+        "; padding: " + (first ? "30px 22px 30px" : "24px 20px 24px") + "; min-height: " + (first ? "250px" : pos === 1 ? "212px" : "194px") +
+        "; animation: podiumIn .7s cubic-bezier(.2,.8,.2,1) " + d.toFixed(2) + "s both" + (first ? ", goldGlow 2.4s ease-in-out " + (d + 1.2).toFixed(2) + "s infinite" : "") + ";",
+      medalWrapStyle: "position: relative; width: " + size + "px; height: " + size + "px; margin-bottom: 14px; flex: none; animation: medalDrop .85s cubic-bezier(.3,1.4,.5,1) " + (d + 0.2).toFixed(2) + "s both;",
+      medalStyle: "position: relative; z-index: 2; width: 100%; height: 100%; border-radius: 999px; display: grid; place-items: center; font-weight: 700; color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.2); font-size: " + (first ? "34px" : "26px") +
+        "; background: " + medal.dot + "; box-shadow: inset 0 0 0 " + (first ? 5 : 4) + "px " + medal.ring + ", 0 4px 0 rgba(20,20,26,.12);",
+      ribbonLStyle: "position: absolute; z-index: 1; bottom: -16px; left: 50%; margin-left: -" + (first ? 16 : 13) + "px; width: " + (first ? 14 : 12) + "px; height: " + (first ? 30 : 24) + "px; background: #2C4A7C; border-radius: 2px; transform: rotate(18deg); transform-origin: top center;",
+      ribbonRStyle: "position: absolute; z-index: 1; bottom: -16px; left: 50%; margin-left: " + (first ? 2 : 1) + "px; width: " + (first ? 14 : 12) + "px; height: " + (first ? 30 : 24) + "px; background: #4C6A9C; border-radius: 2px; transform: rotate(-18deg); transform-origin: top center;",
+      crownStyle: "position: absolute; z-index: 3; top: -30px; left: 50%; margin-left: -20px; width: 40px; height: 30px; animation: crownDrop .6s cubic-bezier(.3,1.4,.5,1) " + (d + 0.75).toFixed(2) + "s both, crownBob 2.6s ease-in-out " + (d + 1.4).toFixed(2) + "s infinite;",
+      nameStyle: "max-width: 100%; font-weight: 600; letter-spacing: -0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: " + (first ? "30px" : "24px") + ";",
+      countStyle: "font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; color: " + (first ? "#8A6A1C" : "#3C3B35") + "; font-size: " + (first ? "30px" : "24px") + ";"
+    };
+  };
+  const cards = top.map((p, i) => card(p, i));
+  const podium = [cards[1], cards[0], cards[2]].filter(Boolean);
+
+  const boardRest = rest.map((p, i) => ({
+    rankLabel: p.rank + ".",
+    name: p.name,
+    count: p.count,
+    rowStyle: "display: flex; align-items: center; gap: 12px; height: 46px; flex: none; font-size: 20px; border-bottom: 1px solid #E4E2DC; animation: listIn .35s ease-out " + restDelay[i].toFixed(2) + "s both;"
+  }));
+
+  const colors = ["#C9A13B", "#E8CB78", "#2C4A7C", "#6E9A6E", "#C47272", "#8C76B8", "#9EA4AD"];
+  const confetti = top[0] ? Array.from({ length: 44 }, (_, i) => {
+    const r1 = ((i * 9301 + 49297) % 233280) / 233280;
+    const r2 = ((i * 7919 + 104729) % 10007) / 10007;
+    const w = 6 + Math.round(r2 * 6);
+    return {
+      style: "position: absolute; top: -20px; left: " + (2 + r1 * 96).toFixed(2) + "%; width: " + w + "px; height: " + Math.round(w * (i % 3 === 0 ? 1 : 1.8)) + "px; border-radius: " + (i % 4 === 0 ? "999px" : "2px") +
+        "; background: " + colors[i % colors.length] + "; opacity: 0; animation: " + ["confA", "confB", "confC"][i % 3] + " " + (2.6 + r2 * 1.6).toFixed(2) + "s cubic-bezier(.25,.6,.4,1) " + (goldAt + 0.35 + r1 * 0.7).toFixed(2) + "s both;"
+    };
+  }) : [];
+  const people = b.list.length;
+  return {
+    podium,
+    boardRest,
+    confetti,
+    boardSession: b.session,
+    boardSummary: b.total + " " + (b.total === 1 ? "answer" : "answers") + " from " + people + " " + (people === 1 ? "person" : "people"),
+    boardEmpty: people === 0,
+    hasBoardMore: more > 0,
+    boardMore: "+ " + more + " more " + (more === 1 ? "contributor" : "contributors"),
+    boardMoreStyle: "font-size: 15px; color: #9A988F; padding: 10px 0 0 56px; animation: listIn .35s ease-out 0.3s both;",
+    drumStyle: drumStart == null ? "display: none;"
+      : "position: absolute; inset: 0; font-size: 22px; font-weight: 600; color: #2C4A7C; animation: drum " + (goldAt - drumStart).toFixed(2) + "s ease " + drumStart.toFixed(2) + "s both;"
+  };
+}
 function arrowStyle(on) {
   return "width: 24px; height: 16px; border: 0; border-radius: 4px; background: transparent; font-size: 9px; line-height: 1; padding: 0; color: " +
     (on ? "#6B6A64" : "#D5D3CC") + "; cursor: " + (on ? "pointer" : "default") + ";";
@@ -544,9 +874,38 @@ function freezeThemes(et, prevSaved) {
 }
 function themeByKey(k) { return ALL_THEMES.find((t) => t.key === k) || null; }
 
+const SB_KEY = "pulse.sb.v1";
+let _rtSb;
+function runtimeSb() {
+  if (_rtSb !== undefined) return _rtSb;
+  _rtSb = null;
+  try {
+    const m = /[#&]sb=([^&]+)/.exec(window.location.hash);
+    if (m) {
+      const v = decodeURIComponent(m[1]), i = v.indexOf("~");
+      if (i > 0) {
+        const ref = v.slice(0, i);
+        _rtSb = { url: /^https?:/.test(ref) ? ref : "https://" + ref + ".supabase.co", anonKey: v.slice(i + 1) };
+        localStorage.setItem(SB_KEY, JSON.stringify(_rtSb));
+        return _rtSb;
+      }
+    }
+    const s = JSON.parse(localStorage.getItem(SB_KEY) || "null");
+    if (s && s.url && s.anonKey) _rtSb = s;
+  } catch (e) {}
+  return _rtSb;
+}
+function fileSb() { const c = window.SUPABASE; return c && c.url && c.anonKey ? c : null; }
+function parseYouTube(u) {
+  const s = String(u || "");
+  const id = (/(?:v=|youtu\.be\/|embed\/|shorts\/|live\/)([\w-]{11})/.exec(s) || [])[1] || null;
+  const list = (/[?&]list=([\w-]+)/.exec(s) || [])[1] || null;
+  return id || list ? { id, list } : null;
+}
+const TIMER_PRESETS = [60, 120, 180, 300, 600];
+function fmtTime(ms) { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
 function sbConfig() {
-  const c = window.SUPABASE;
-  return c && c.url && c.anonKey ? c : null;
+  return fileSb() || runtimeSb();
 }
 
 class Component extends DCLogic {
@@ -564,6 +923,10 @@ class Component extends DCLogic {
     kiosk: false,
     menuOpen: false,
     confirm: null,
+    music: { on: false, track: "lofi", vol: 0.5 },
+    timer: null,
+    mentionName: null,
+    liveId: (() => { try { return localStorage.getItem("pulse.live.v1") || null; } catch (e) { return null; } })(),
     mine: loadMine()
   };
 
@@ -611,6 +974,11 @@ class Component extends DCLogic {
     const hit = this.state.sessions.find((s) => s.code === c);
     if (!hit) { this.setState({ codeError: "No active session uses that code. Check the screen and try again." }); return; }
     this.setState({ scanCode: c, codeDraft: "", codeError: "", phoneSessionId: null, phoneName: "" });
+  }
+
+  setLive(id) {
+    this.setState({ liveId: id });
+    try { if (id) localStorage.setItem("pulse.live.v1", id); else localStorage.removeItem("pulse.live.v1"); } catch (e) {}
   }
 
   ask(title, body, label, onYes) { this.setState({ confirm: { title, body, label, onYes }, menuOpen: false }); }
@@ -669,6 +1037,7 @@ class Component extends DCLogic {
       code: r.code,
       questions: Array.isArray(r.questions) ? r.questions : [],
       activeIndex: r.active_index || 0,
+      settings: r.settings || {},
       participants: parts.filter((p) => p.session_id === r.id).map((p) => p.name),
       responses: resps.filter((x) => x.session_id === r.id)
         .map((x) => ({ id: x.id, qid: x.question_id, name: x.name, text: x.body, ts: Date.parse(x.created_at),
@@ -687,6 +1056,14 @@ class Component extends DCLogic {
   }
 
   componentDidMount() {
+    this._tick = setInterval(() => {
+      const t = this.state.timer;
+      if (!t || !t.endsAt) return;
+      if (t.endsAt - Date.now() <= 0) {
+        if (window.PulseAudio) window.PulseAudio.beep();
+        this.setState({ timer: { ...t, endsAt: null, remaining: 0, done: true } });
+      } else this.setState({ now: Date.now() });
+    }, 250);
     const m = /[#?&]join(?:=(\d*))?/.exec(window.location.hash + window.location.search);
     const scanned = m ? (m[1] || "") : null; // "" = arrived via short link, needs code
 
@@ -737,8 +1114,25 @@ class Component extends DCLogic {
   componentWillUnmount() {
     if (this._onStorage) window.removeEventListener("storage", this._onStorage);
     if (this._poll) clearInterval(this._poll);
+    if (this._tick) clearInterval(this._tick);
+    if (window.PulseAudio) window.PulseAudio.stop();
   }
-  componentDidUpdate() { this.drawQr(); }
+  componentDidUpdate() {
+    this.drawQr();
+    const sel = this.selected();
+    const q = this.state.view === "present" && sel ? this.activeQuestion(sel) : null;
+    const qid = q ? q.id : null;
+    if (qid !== this._lastQid) {
+      this._lastQid = qid;
+      this.stopMusic();
+      if (q && (!this.state.timer || this.state.timer.qid !== qid)) {
+        const tot = this.timerDefault(sel);
+        this.setState({ timer: { qid, total: tot, remaining: tot, endsAt: null, done: false }, timerEdit: false });
+      }
+    }
+    const url = sel && sel.settings ? sel.settings.youtubeUrl || "" : "";
+    if (this._ytEl && url !== this._ytUrl) this.mountYT(this._ytEl, url);
+  }
 
   persist(sessions) {
     this.setState({ sessions });
@@ -758,9 +1152,10 @@ class Component extends DCLogic {
   }
 
   update(id, fn) {
-    let next = null;
+    let next = null, prev = null;
     this.persist(this.state.sessions.map((s) => {
       if (s.id !== id) return s;
+      prev = s;
       next = fn({ ...s });
       return next;
     }));
@@ -770,13 +1165,92 @@ class Component extends DCLogic {
         prefer: "return=minimal",
         body: { name: next.name, code: next.code, questions: next.questions, active_index: next.activeIndex || 0 }
       }));
+      if (JSON.stringify(prev.settings || {}) !== JSON.stringify(next.settings || {})) {
+        this.remoteWrite(this.sb("sessions?id=eq." + id, { method: "PATCH", prefer: "return=minimal", body: { settings: next.settings || {} } }));
+      }
     }
+  }
+
+  updateSettings(id, patch) { this.update(id, (s) => ({ ...s, settings: { ...(s.settings || {}), ...patch } })); }
+
+  timerDefault(sess) { return ((sess && sess.settings && sess.settings.timerSec) || 120) * 1000; }
+
+  setTimerFor(sess, q, sec) {
+    if (!q) return;
+    this.setState({ timer: { qid: q.id, total: sec * 1000, remaining: sec * 1000, endsAt: null, done: false }, timerEdit: false, timerDraft: "" });
+    if (sess) this.updateSettings(sess.id, { timerSec: sec });
+  }
+
+  startMusic(track) {
+    const m = this.state.music;
+    const t = track || m.track;
+    if (t === "youtube") {
+      if (window.PulseAudio) window.PulseAudio.stop();
+      if (this._yt && this._yt.playVideo) { this._yt.setVolume(Math.round(m.vol * 100)); this._yt.playVideo(); }
+      else this._ytPlayWhenReady = true;
+    } else {
+      if (this._yt && this._yt.pauseVideo) this._yt.pauseVideo();
+      if (window.PulseAudio) { window.PulseAudio.setVolume(m.vol); window.PulseAudio.play(t); }
+    }
+    this.setState({ music: { ...m, track: t, on: true } });
+  }
+
+  stopMusic() {
+    if (window.PulseAudio) window.PulseAudio.stop();
+    if (this._yt && this._yt.pauseVideo) { try { this._yt.pauseVideo(); } catch (e) {} }
+    this._ytPlayWhenReady = false;
+    if (this.state.music.on) this.setState({ music: { ...this.state.music, on: false } });
+  }
+
+  loadYTApi() {
+    if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
+    if (!this._ytApi) {
+      this._ytApi = new Promise((resolve) => {
+        const prev = window.onYouTubeIframeAPIReady;
+        window.onYouTubeIframeAPIReady = () => { if (prev) prev(); resolve(window.YT); };
+        const s = document.createElement("script");
+        s.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(s);
+      });
+    }
+    return this._ytApi;
+  }
+
+  mountYT(el, url) {
+    const yt = parseYouTube(url);
+    this._ytUrl = url;
+    if (this._yt) { try { this._yt.destroy(); } catch (e) {} this._yt = null; }
+    if (!el || !yt) return;
+    el.innerHTML = "";
+    const holder = document.createElement("div");
+    el.appendChild(holder);
+    this.loadYTApi().then((YT) => {
+      if (this._ytEl !== el) return;
+      const vars = { autoplay: 0, controls: 1, rel: 0, playsinline: 1, modestbranding: 1 };
+      if (yt.list) { vars.listType = "playlist"; vars.list = yt.list; }
+      this._yt = new YT.Player(holder, {
+        width: "100%", height: "100%", videoId: yt.id || undefined, playerVars: vars,
+        events: {
+          onReady: (e) => {
+            e.target.setVolume(Math.round(this.state.music.vol * 100));
+            if (this._ytPlayWhenReady) { e.target.playVideo(); this._ytPlayWhenReady = false; }
+          }
+        }
+      });
+    });
   }
 
   joinUrlFor(code) {
     const loc = window.location;
     if (loc.protocol === "http:" || loc.protocol === "https:") {
-      return loc.origin + loc.pathname + "#join=" + code;
+      let extra = "";
+      const rt = !fileSb() && runtimeSb();
+      if (rt) {
+        const mm = /^https:\/\/([a-z0-9]+)\.supabase\.co\/?$/.exec(rt.url);
+        extra = "&sb=" + encodeURIComponent((mm ? mm[1] : rt.url) + "~" + rt.anonKey);
+      }
+      const path = /\.github\.io$/.test(loc.hostname) ? loc.pathname.replace(/[^/]*$/, "") : loc.pathname;
+      return loc.origin + path + "#join=" + code + extra;
     }
     return "https://" + HOST + "/j/" + code;
   }
@@ -797,7 +1271,7 @@ class Component extends DCLogic {
     [[this._qr, 216, "present"], [this._qrAdmin, 120, "admin"]].forEach(([el, px, tag]) => {
       if (!el || !el.isConnected) return;
       if (el.dataset.drawn === url + "|" + px) return;
-      window.QRSimple.draw(el, url, px, "#14141A");
+      try { window.QRSimple.draw(el, url, px, "#14141A"); } catch (e) { console.warn("QR too long", e); }
       el.dataset.drawn = url + "|" + px;
     });
   }
@@ -856,6 +1330,7 @@ class Component extends DCLogic {
   renderVals() {
     const st = this.state;
     const sel = this.selected();
+    const liveSess = st.liveId ? (st.sessions.find((s) => s.id === st.liveId && (s.activeIndex || 0) >= 0) || null) : null;
     const sq = sel ? this.activeQuestion(sel) : null;
     const accent = this.props.accentColor || "#2C4A7C";
     const showNames = this.props.showParticipantNames !== false;
@@ -876,6 +1351,38 @@ class Component extends DCLogic {
     const colW = (gridW - 14 * (colCount - 1)) / colCount;
     const cpl = Math.max(10, (colW - 36) / 9.6);
     const cols = Array.from({ length: colCount }, () => ({ h: 0, items: [] }));
+    const pNames = (() => {
+      if (!sel) return [];
+      const seen = {}, out = [];
+      [...(sel.participants || []), ...sel.responses.map((r) => r.name)].forEach((n) => {
+        const t = String(n || "").trim(); const k = t.toLowerCase();
+        if (!t || k === "presenter" || seen[k]) return; seen[k] = 1; out.push(t);
+      });
+      return out.sort((a, b) => a.localeCompare(b));
+    })();
+    const draft = st.presenterDraft || "";
+    const partial = /(?:^|\s)@([^\s@]*)$/.exec(draft);
+    const mentionOpts = partial && st.mentionDismissed !== draft
+      ? pNames.filter((n) => n.toLowerCase().startsWith(partial[1].toLowerCase())).slice(0, 6) : [];
+    const mention = st.mentionName ? { name: st.mentionName, token: null } : (() => {
+      const re = /(^|\s)@([^\s@]+)/g; let m;
+      while ((m = re.exec(draft))) {
+        const hit = pNames.find((n) => n.toLowerCase() === m[2].toLowerCase());
+        if (hit) return { name: hit, token: m[0] };
+      }
+      return {};
+    })();
+    const pickMention = (n) => {
+      const next = draft.replace(/(^|\s)@([^\s@]*)$/, (all, pre) => pre);
+      this.setState({ presenterDraft: next.slice(0, MAX_ANSWER), mentionIdx: 0, mentionName: n });
+    };
+    const submitPresenter = () => {
+      if (!sq) return;
+      const text = mention.token ? draft.replace(mention.token, " ").replace(/\s+/g, " ").trim() : draft.trim();
+      if (!text) return;
+      this.addAnswer(sel, sq, mention.name || "Presenter", text);
+      this.setState({ presenterDraft: "", mentionIdx: 0, mentionName: null });
+    };
     const focusKey = grouping && st.focusTheme && liveResponses.some((r) => et.map.get(r.id) === st.focusTheme) ? st.focusTheme : null;
     const responded = new Set(liveResponses.map((r) => r.name)).size;
     const partCount = sel ? Math.max(sel.participants.length, responded) : 0;
@@ -899,6 +1406,118 @@ class Component extends DCLogic {
         ? "Supabase error — " + st.backendError.slice(0, 80)
         : (sbConfig() ? "live · synced via Supabase" : "local only · data stays in this browser"),
       showChrome: !st.kiosk,
+      ...(() => {
+        const set = (sel && sel.settings) || {};
+        const showP = !!set.showProgress;
+        const defSec = set.timerSec || 120;
+        const tm = st.timer && sq && st.timer.qid === sq.id ? st.timer : null;
+        const running = !!(tm && tm.endsAt);
+        const left = tm ? (running ? Math.max(0, tm.endsAt - Date.now()) : tm.remaining) : defSec * 1000;
+        const urgent = (running && left <= 10000) || (tm && tm.done);
+        const chip = (on) => "border: 1px solid " + (on ? "#2C4A7C" : "#DAD7CF") + "; background: " + (on ? "#2C4A7C" : "#fff") + "; color: " + (on ? "#fff" : "#3C3B35") +
+          "; border-radius: 999px; padding: 5px 11px; font-size: 13px; font-weight: 600; cursor: pointer; font-variant-numeric: tabular-nums;";
+        const yt = parseYouTube(set.youtubeUrl);
+        const tracks = (window.PulseAudio ? window.PulseAudio.tracks : []).concat(yt ? [{ id: "youtube", name: "YouTube" }] : []);
+        const tIdx = Math.max(0, tracks.findIndex((t) => t.id === st.music.track));
+        const curTrack = tracks[tIdx] || { id: "lofi", name: "Lo-fi beats" };
+        const cycle = (dir) => {
+          if (!tracks.length) return;
+          const next = tracks[(tIdx + dir + tracks.length) % tracks.length];
+          if (st.music.on) this.startMusic(next.id); else this.setState({ music: { ...st.music, track: next.id } });
+        };
+        const liveN = liveResponses.length;
+        const connSaved = (() => { try { return !!localStorage.getItem(SB_KEY); } catch (e) { return false; } })();
+        return {
+          showProgress: showP,
+          hideProgress: !showP,
+          liveCount: liveN,
+          liveCountLabel: liveN === 1 ? "response" : "responses",
+          toggleShowProgress: () => sel && this.updateSettings(sel.id, { showProgress: !showP }),
+          progressTrackStyle: "display: block; position: relative; width: 36px; height: 22px; border-radius: 999px; transition: background .2s; background: " + (showP ? "#2C4A7C" : "#D5D3CC") + ";",
+          progressKnobStyle: "position: absolute; top: 3px; left: " + (showP ? "17px" : "3px") + "; width: 16px; height: 16px; border-radius: 999px; background: #fff; transition: left .2s; box-shadow: 0 1px 2px rgba(0,0,0,.2);",
+          adminTimerPresets: TIMER_PRESETS.map((s) => ({ label: s / 60 + " min", style: chip(defSec === s), pick: () => sel && this.updateSettings(sel.id, { timerSec: s }) })),
+          ytUrlDraft: set.youtubeUrl || "",
+          setYtUrl: (e) => sel && this.updateSettings(sel.id, { youtubeUrl: e.target.value.trim() }),
+          ytHelp: set.youtubeUrl && !yt ? "That doesn't look like a YouTube video or playlist link."
+            : "Adds a YouTube option to the music player in Present mode. Ads can't be skipped automatically; if you're signed in to YouTube Premium in this browser, embedded videos play without ads.",
+          ytHelpStyle: "font-size: 12px; line-height: 1.45; color: " + (set.youtubeUrl && !yt ? "#C0392B" : "#6B6A64") + ";",
+
+          timerText: fmtTime(left),
+          timerTextStyle: "background: transparent; border: 0; padding: 0; cursor: pointer; font-size: 40px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; color: " + (urgent ? "#C0392B" : "#14141A") + ";",
+          timerRunning: running,
+          timerStopped: !running,
+          timerDone: !!(tm && tm.done),
+          timerBtnTitle: running ? "Pause timer" : "Start timer",
+          timerBtnStyle: "width: 44px; height: 44px; border-radius: 999px; border: 0; cursor: pointer; display: grid; place-items: center; padding: 0; color: #fff; background: " + accent + ";",
+          toggleTimer: () => {
+            if (!sq) return;
+            const cur = tm || { qid: sq.id, total: defSec * 1000, remaining: defSec * 1000, endsAt: null, done: false };
+            if (running) this.setState({ timer: { ...cur, remaining: Math.max(0, cur.endsAt - Date.now()), endsAt: null } });
+            else {
+              const rem = cur.remaining > 0 ? cur.remaining : cur.total;
+              this.setState({ timer: { ...cur, remaining: rem, endsAt: Date.now() + rem, done: false }, timerEdit: false });
+            }
+          },
+          resetTimer: () => { if (sq) { const tot = tm ? tm.total : defSec * 1000; this.setState({ timer: { qid: sq.id, total: tot, remaining: tot, endsAt: null, done: false } }); } },
+          timerEdit: !!st.timerEdit && !running,
+          toggleTimerEdit: () => { if (!running) this.setState({ timerEdit: !st.timerEdit }); },
+          timerPresets: TIMER_PRESETS.map((s) => ({ label: s / 60 + "m", style: chip(tm ? tm.total === s * 1000 : defSec === s), pick: () => this.setTimerFor(sel, sq, s) })),
+          timerDraft: st.timerDraft || "",
+          setTimerDraft: (e) => this.setState({ timerDraft: e.target.value.replace(/[^\d:]/g, "").slice(0, 5) }),
+          timerDraftKey: (e) => {
+            if (e.key !== "Enter") return;
+            const v = String(st.timerDraft || "");
+            const mm = /^(\d{1,2})(?::(\d{1,2}))?$/.exec(v);
+            if (!mm) return;
+            const sec = parseInt(mm[1], 10) * (mm[2] != null ? 60 : 60) + (mm[2] != null ? parseInt(mm[2], 10) : 0);
+            if (sec > 0 && sec <= 5999) this.setTimerFor(sel, sq, sec);
+          },
+
+          musicOn: st.music.on,
+          musicOff: !st.music.on,
+          musicBtnTitle: st.music.on ? "Mute music" : "Play music",
+          musicBtnStyle: "width: 36px; height: 36px; border-radius: 999px; border: 0; cursor: pointer; display: grid; place-items: center; padding: 0; flex: none; background: " +
+            (st.music.on ? accent : "#fff") + "; color: " + (st.music.on ? "#fff" : "#6B6A64") + ";",
+          toggleMusic: () => { if (st.music.on) this.stopMusic(); else this.startMusic(curTrack.id); },
+          trackName: curTrack.name,
+          prevTrack: () => cycle(-1),
+          nextTrack: () => cycle(1),
+          musicVolPct: Math.round(st.music.vol * 100),
+          setMusicVol: (e) => {
+            const v = Number(e.target.value) / 100;
+            this.setState({ music: { ...st.music, vol: v } });
+            if (window.PulseAudio) window.PulseAudio.setVolume(v);
+            if (this._yt && this._yt.setVolume) this._yt.setVolume(Math.round(v * 100));
+          },
+          isYouTube: curTrack.id === "youtube",
+          ytRef: (el) => {
+            if (el === this._ytEl) return;
+            this._ytEl = el;
+            if (!el) { if (this._yt) { try { this._yt.destroy(); } catch (e) {} this._yt = null; } this._ytUrl = null; return; }
+            this.mountYT(el, set.youtubeUrl || "");
+          },
+
+          openConn: () => {
+            const c = runtimeSb() || fileSb() || {};
+            this.setState({ connOpen: true, connUrl: c.url || "", connKey: c.anonKey || "" });
+          },
+          connOpen: !!st.connOpen && !st.kiosk,
+          connFromFile: !!fileSb(),
+          connHasSaved: connSaved,
+          connUrl: st.connUrl || "",
+          connKey: st.connKey || "",
+          setConnUrl: (e) => this.setState({ connUrl: e.target.value.trim() }),
+          setConnKey: (e) => this.setState({ connKey: e.target.value.trim() }),
+          closeConn: () => this.setState({ connOpen: false }),
+          saveConn: () => {
+            const url = (st.connUrl || "").replace(/\/$/, ""), key = st.connKey || "";
+            if (!/^https:\/\/.+/.test(url) || !key) return;
+            try { localStorage.setItem(SB_KEY, JSON.stringify({ url, anonKey: key })); } catch (e) {}
+            window.location.reload();
+          },
+          disconnectConn: () => { try { localStorage.removeItem(SB_KEY); } catch (e) {} window.location.reload(); }
+        };
+      })(),
       hasConfirm: !!st.confirm,
       confirmTitle: st.confirm ? st.confirm.title : "",
       confirmBody: st.confirm ? st.confirm.body : "",
@@ -922,34 +1541,80 @@ class Component extends DCLogic {
       isPhone: st.view === "phone",
       goAdmin: () => this.setState({ view: "admin" }),
       goPresent: () => {
-        if (sel) this.update(sel.id, (s) => ({ ...s, activeIndex: 0 }));
+        if (liveSess) { this.setState({ selectedId: liveSess.id, view: "present" }); return; }
+        if (sel) { this.update(sel.id, (s) => ({ ...s, activeIndex: 0 })); this.setLive(sel.id); }
         this.setState({ view: "present" });
       },
       goPhone: () => this.setState({ view: "phone" }),
       present: () => {
-        if (sel) this.update(sel.id, (s) => ({ ...s, activeIndex: 0 }));
+        if (sel) { this.update(sel.id, (s) => ({ ...s, activeIndex: 0 })); this.setLive(sel.id); }
         this.setState({ view: "present" });
       },
+      switchToAdmin: () => this.setState({ view: "admin" }),
+      hasLive: !!liveSess,
+      liveName: liveSess ? liveSess.name : "",
+      livePosition: liveSess ? "Question " + (Math.min(Math.max(liveSess.activeIndex || 0, 0), liveSess.questions.length - 1) + 1) + " of " + liveSess.questions.length : "",
+      liveQuestion: liveSess && liveSess.questions[liveSess.activeIndex || 0] ? liveSess.questions[liveSess.activeIndex || 0].text : "",
+      returnLive: () => { if (liveSess) this.setState({ selectedId: liveSess.id, view: "present" }); },
+      endLive: () => {
+        if (!liveSess) return;
+        this.update(liveSess.id, (s) => ({ ...s, activeIndex: -1 }));
+        this.setLive(null);
+        this.setState({ selectedId: liveSess.id, view: "board", board: buildBoard(liveSess), boardHidden: false });
+      },
       endPresentation: () => {
+        this.setLive(null);
         if (sel) this.update(sel.id, (s) => ({ ...s, activeIndex: -1 }));
-        this.setState({ view: "admin" });
+        this.setState({ view: "board", board: sel ? buildBoard(sel) : null, boardHidden: false });
+      },
+      isBoard: st.view === "board" && !st.kiosk && !st.boardHidden,
+      replayBoard: () => {
+        this.setState({ boardHidden: true }, () => requestAnimationFrame(() => this.setState({ boardHidden: false })));
+      },
+      closeBoard: () => this.setState({ view: "admin", board: null }),
+      ...boardVals(st.board, st.boardH),
+      boardListRef: (el) => {
+        if (this._boardEl === el) return;
+        if (this._boardRo) { this._boardRo.disconnect(); this._boardRo = null; }
+        this._boardEl = el;
+        if (!el || !window.ResizeObserver) return;
+        this._boardRo = new ResizeObserver((ents) => {
+          const h = Math.round(ents[0].contentRect.height);
+          if (h && Math.abs(h - (this.state.boardH || 0)) > 4) this.setState({ boardH: h });
+        });
+        this._boardRo.observe(el);
       },
       showBackendLabel: st.view !== "phone",
       presenterDraft: st.presenterDraft || "",
       presenterRemaining: (MAX_ANSWER - (st.presenterDraft || "").length) + " chars",
-      setPresenterDraft: (e) => this.setState({ presenterDraft: e.target.value.slice(0, MAX_ANSWER) }),
+      setPresenterDraft: (e) => this.setState({ presenterDraft: e.target.value.slice(0, MAX_ANSWER), mentionIdx: 0, mentionDismissed: null }),
       presenterKeyDown: (e) => {
+        if (mentionOpts.length) {
+          if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            e.preventDefault();
+            const n = mentionOpts.length, cur = Math.min(st.mentionIdx || 0, n - 1);
+            this.setState({ mentionIdx: (cur + (e.key === "ArrowDown" ? 1 : n - 1)) % n });
+            return;
+          }
+          if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); pickMention(mentionOpts[Math.min(st.mentionIdx || 0, mentionOpts.length - 1)]); return; }
+          if (e.key === "Escape") { this.setState({ mentionDismissed: st.presenterDraft }); return; }
+        }
+        if (e.key === "Backspace" && !draft && st.mentionName) { this.setState({ mentionName: null }); return; }
         if (e.key !== "Enter") return;
         e.preventDefault();
-        if (!sq) return;
-        this.addAnswer(sel, sq, "Presenter", st.presenterDraft);
-        this.setState({ presenterDraft: "" });
+        submitPresenter();
       },
-      addPresenterAnswer: () => {
-        if (!sq || !(st.presenterDraft || "").trim()) return;
-        this.addAnswer(sel, sq, "Presenter", st.presenterDraft);
-        this.setState({ presenterDraft: "" });
-      },
+      addPresenterAnswer: () => submitPresenter(),
+      hasMentionList: mentionOpts.length > 0,
+      mentionList: mentionOpts.map((n, i) => ({
+        name: n,
+        pick: (e) => { e.preventDefault(); pickMention(n); },
+        style: "text-align: left; background: " + (i === Math.min(st.mentionIdx || 0, mentionOpts.length - 1) ? "#EDEBE6" : "transparent") +
+          "; border: 0; border-radius: 8px; padding: 8px 10px; font-size: 15px; font-weight: 600; cursor: pointer;"
+      })),
+      hasMentionAs: !!mention.name,
+      clearMention: () => this.setState({ mentionName: null }),
+      mentionAs: mention.name || "",
       presenterAddStyle: "border: 0; border-radius: 999px; padding: 12px 20px; font-size: 15px; font-weight: 600; white-space: nowrap; background: " +
         ((st.presenterDraft || "").trim() && sq ? accent : "#F0EFEB") + "; color: " +
         ((st.presenterDraft || "").trim() && sq ? "#fff" : "#B4B2AA") + "; cursor: " +
@@ -1043,6 +1708,7 @@ class Component extends DCLogic {
         },
         presentFrom: () => {
           this.update(sel.id, (s) => ({ ...s, activeIndex: i }));
+          this.setLive(sel.id);
           this.setState({ view: "present" });
         },
         up: () => this.moveQuestion(sel, i, i - 1),
@@ -1157,11 +1823,23 @@ class Component extends DCLogic {
           commit
         };
       }).filter(Boolean) : [],
+      canAddTheme: grouping && !!sq && THEMES.some((th) => !(et.labels[th.key]) && !((sq.themes || []).some((x) => x.key === th.key))),
+      addTheme: () => {
+        if (!sel || !sq) return;
+        const used = new Set([...Object.keys(et.labels), ...((sq.themes || []).map((x) => x.key))]);
+        const free = THEMES.find((th) => !used.has(th.key));
+        if (!free) return;
+        this.update(sel.id, (s) => ({
+          ...s,
+          questions: s.questions.map((x) => (x.id !== sq.id ? x : { ...x, themes: [...freezeThemes(et, x.themes), { key: free.key, label: "New theme", stems: [] }] }))
+        }));
+        this.setState({ editTheme: free.key, themeDraft: "New theme" });
+      },
       rerunThemes: () => {
         if (!sel || !sq) return;
         const hasEdits = (sq.themes && sq.themes.length) || liveResponses.some((r) => r.theme);
         const run = () => this.rerunQuestion(sel, sq);
-        if (hasEdits) this.ask("Re-run sentiment analysis?", "Your renamed themes and manual colour changes for this question will be replaced with a fresh grouping.", "Re-run", run);
+        if (hasEdits) this.ask("Re-generate themes?", "Your renamed and added themes and manual colour changes for this question will be replaced with a fresh grouping.", "Re-generate", run);
         else run();
       },
       presentEmpty: liveResponses.length === 0,
